@@ -1,0 +1,438 @@
+# Technical decisions — calendar core, parental panel, mission games, album and direct photo capture (P0–P11 + audit corrections)
+
+Phase P0 fixed the stack, data contracts and local-first boundary. Phase P1 added the mobile-first 24-door calendar, the four approved day states, the star tree, local-date unlocks and an isolated adult demo mode. Phase P2 added the PIN-protected parental panel and the mission-status seam. Phase P3 added the first four games: day 2 memory, day 8 word scramble, day 16 jigsaw and day 18 bell Simon. Phase P4 added day 4 reindeer maze, day 6 spot the difference, day 10 ornament patterns and day 12 gift rain. Phase P5 added day 14 maths chest, day 19 hidden objects, day 21 absent-minded snowman and day 22 secret elf language. Phase P6 added the five physical challenge adaptations: day 3 red checklist, day 5 snowball fight, day 9 sock pairs, day 11 guided drawing and day 13 no laughing. Phase P7 added day 15 elf-hands pyramid, day 17 silent-elf charades, day 20 mystery bag and day 23 surprise for Trasto. This P8 slice added the two remaining approved game designs: day 1 elf dance and day 24 final mission. This P9 slice added the day 7 silly carol with optional camera/microphone recording. This P10 slice added the private local album: IndexedDB metadata and blobs, gallery import, preview, individual download, confirmed deletion, persistent-storage and quota reporting, a dependency-free ZIP export, and an explicit day 7 save after the recording succeeds. This P11 slice adds adult-only direct photo capture from the album: front camera by default, rear switch before capture, frozen review, an explicit save after confirmation, cancellation without saving and camera-track release on every exit path. The bounded audit pass adds visible repetition of completed missions without progress writes, a persistent adult-preview bar with a locking child-calendar exit, a local parental camera/recording switch, invisible coordinate hit areas for day 19 and late-track cleanup for day 7. This accessibility and resilience slice adds view-level focus management, milestone-only screen-reader announcements for live counters, accessible symbol/letter descriptions for days 22 and 24, 44 px minimum targets on compact controls, and a recovery boundary that returns the family to the calendar without exposing error details.
+
+**Outcome:** the app builds to a static, local-only calendar where an adult can configure hints, hiding spots, manual unlocks and the optional camera behind a PIN, preview or demo any mission without touching child progress, and the child can play all twenty-four real touch-and-mouse games whose success opens the existing hint and gift/star flow. Completed missions can be replayed without changing or duplicating the star. The family can keep photos and videos per day, take new photos from the unlocked album when the parental switch allows it, and day 7 can save its recording to the private album only after the browser confirms the write. No media is uploaded or exposed in child mode.
+
+## Quick path
+
+1. Read `Scope of this slice` to confirm what is intentionally missing.
+2. Read `Navigation and adult surfaces` before changing unlock, demo or preview behaviour.
+3. Read `Mission flow` before changing the `status` branch.
+4. Run `npm run build`, `npm run lint` and `npm test`.
+
+## Scope of this slice
+
+| Delivered | Out of scope |
+|-----------|--------------|
+| Mobile-first grid of 24 doors and four day states | Video capture from the album panel (day 7 keeps its own recording) |
+| Local December 2026 date and access to previous days | Real audio, music and narration |
+| Star tree with one star per day and real pending progress | Final artwork, licensed assets and the authorized carol |
+| Persisted child progress plus an isolated demo store | PIN change, PIN recovery and multi-user accounts |
+| First-time parental PIN setup, session unlock and lock | Automated DOM/component test runner |
+| Adult panel for main hint, location help, hiding spot and local camera/recording switch | PWA, offline and service worker |
+| Per-day manual unlock toggle | Backend, sync or external services |
+| Mission preview against the demo store with a persistent adult label and locking exit | Deployment or release work |
+| Completed missions repeatable without mutating progress or adding stars | — |
+| `MissionDefinition.status` branch and populated game registry | Sonar-style cryptographic secrecy for a local PIN |
+| Days 1 through 24 implemented as real games | Real-device camera, microphone and storage QA |
+| Day 7 camera/microphone recording with track cleanup and explicit album save | ZIP64 archives, compression and cloud backup |
+| Private album behind the parental PIN: metadata and blobs in IndexedDB | Media encryption at rest |
+| Multiple photos/videos per day, day/date listing and preview | — |
+| Adult-only direct photo capture with front default and rear switch | — |
+| Frozen capture preview, explicit save and cancel-without-saving | — |
+| Gallery file-picker import, individual download and confirmed deletion | — |
+| Dependency-free ZIP32 export with individual-download fallback | — |
+| Persistent-storage request, quota detection and export warning | — |
+| Visible save-failure reporting for PIN, config, progress and media | — |
+| Domain, game-rule, PIN, album, capture, ZIP, adapter and storage tests | — |
+
+## Stack
+
+| Topic | Decision | Why |
+|-------|----------|-----|
+| UI | React 19 + TypeScript, built with Vite | Approved stack; static output and a fast dev loop |
+| Rendering | Single-page app, local view state, no router | Calendar, mission, gate and panel are local views; a router would add a dependency without a URL requirement |
+| Hosting | Static HTTPS on GitHub Pages, no backend | Approved target; all data stays local |
+| Styling | Plain CSS, mobile-first, safe-area padding | No CSS framework needed for a small touch-first UI |
+| Build base | `VITE_BASE_PATH` drives `base`; the Pages workflow sets `/<repository>/` and local builds fall back to `./` | Project Pages needs the repository segment; deriving it in the workflow survives a repository rename |
+| Deployment | GitHub Actions builds `dist/` with `npm ci` and deploys it with `upload-pages-artifact` + `deploy-pages` | No branch publishing, no build artifacts in the repository and no extra dependency; see `docs/DEPLOYMENT.md` |
+| Offline / PWA | Deferred | Not an approved requirement; no manifest or service worker |
+| Dependencies | Only React runtime + standard tooling | The spec forbids unnecessary frameworks and infrastructure; the ZIP writer lives in the repository instead of adding a package |
+
+## Local-first persistence
+
+| Data | Storage | Rationale |
+|------|---------|-----------|
+| Child config, PIN and progress | `localStorage`, key `los24regalos:v1` | Small JSON document; synchronous read keeps first render simple |
+| Demo and preview progress | `localStorage`, key `los24regalos:demo:v1` | Isolated data that can never grant or remove a child star |
+| Album metadata and blobs | IndexedDB database `los24regalos-album`, stores `metadata` and `media` | Blobs do not belong in `localStorage`; the metadata store lists the album without loading every blob |
+| Persistent storage | `navigator.storage.persist()` when available | Best effort only; a denial is shown, never hidden |
+| Sync / upload | None | No backend and no private media ever leaves the device |
+
+- The child snapshot carries `schemaVersion: 1` and an `AppState` shape.
+- The demo snapshot carries `schemaVersion: 1` and only `progress`; configuration is always read from the live child config so a preview matches the real hints.
+- Loading validates shape and discards anything unknown or from another version, falling back to defaults. A corrupted or tampered PIN record is discarded on load. A snapshot written before `parental.cameraEnabled` existed loads with the camera enabled, preserving the previous behaviour. There is no silent migration; a future schema change must add one before bumping the version.
+- `saveAppState` and `saveDemoProgress` return `false` when the browser refuses to persist. The UI shows an alert instead of claiming the data was saved.
+- `resetDemoProgress` returns `false` when the browser cannot clear the demo key; the panel shows the failure even though the in-memory reset still applies to the session.
+- Demo data is stored separately on purpose. The demo-mode flag and the unlocked adult session are React session state, so a reload returns to the locked child calendar.
+- Album media never enters `AppState` or `localStorage`. The album database has its own version (`ALBUM_DB_VERSION`); a future schema change must add an upgrade path before bumping it.
+- Album operations reject with stable codes (`quota`, `unavailable`, `blocked`, `transaction`, `not-found`). The UI maps codes to family-facing messages and only reports success after the IndexedDB transaction resolves.
+- The album asks for persistent storage when the adult opens it and, best effort, when day 7 saves a clip. The browser may still evict data; the album always recommends exporting.
+
+## Data model
+
+```
+AppState
+├─ schemaVersion
+├─ config: AppConfig
+│  ├─ parental: { pin: PinRecord | null, cameraEnabled: boolean }
+│  └─ days: Record<MissionDay, DaySettings>
+│     ├─ hidingSpot   (parent-only, rendered only in the adult panel)
+│     ├─ hints        (main + optional location; null = not configured)
+│     └─ manuallyUnlocked
+└─ progress: ProgressState
+   └─ days: Partial<Record<MissionDay, DayProgress>>
+      ├─ missionCompletedAt
+      ├─ giftFoundAt        → star (one record per day, so no duplicates)
+      ├─ hintRevealedAt
+      └─ locationHintRevealedAt
+```
+
+- `MissionDay` is the literal union `1…24`; `MISSION_DAYS` and `TOTAL_MISSIONS` derive from it.
+
+```
+AlbumMediaMetadata
+├─ id            (unique album key)
+├─ day           (MissionDay 1…24)
+├─ kind          photo | video
+├─ mimeType      (normalized; extension inferred when the browser omits it)
+├─ fileName      (sanitized download name)
+├─ byteSize
+├─ createdAt     (ISO timestamp)
+└─ source        recording | import | capture
+```
+
+- Album metadata and blobs are stored outside `AppState`. The `metadata` store has no blobs; the `media` store has `{ id, blob }`.
+- `src/domain/album.ts` validates day, size, date, id and MIME type, sanitizes names and derives day/kind ZIP names. It never performs storage or network work.
+- `src/domain/missions.ts` keeps the 24 approved titles and mechanics as metadata. All 24 days are `status: 'implemented'`. The status branch remains in place so future planned work can still refuse to simulate a missing game.
+- `src/domain/config.ts` exposes pure transitions: `updateDaySettings` patches one day, `setParentalPin` replaces the PIN record and `setCameraEnabled` toggles the local camera/recording preference. All return a new `AppConfig`.
+- Progress transitions in `src/domain/progress.ts` are pure and immutable. Repeating a mission keeps the first timestamps and never adds a second star.
+- `src/domain/calendar.ts` is the only module that knows the season. It compares **local** calendar dates (`getFullYear` / `getMonth` / `getDate`), so a door opens at local midnight, not at UTC midnight.
+- `getTodayMissionDay` highlights today only; it is not an access rule.
+
+### Day states
+
+| Status | Meaning |
+|--------|---------|
+| `locked` | Local date is before the day (and no adult override) |
+| `available` | Released and not completed |
+| `mission-complete` | Mission done, gift not confirmed |
+| `gift-found` | Gift confirmed; the day has its star |
+
+Prior days stay available; an unfinished day never blocks a later one. A gift already found is shown even if the date rules would lock that day. Adult preview is session-only and never writes child progress. Parental manual unlock is stored per day in `config.days[day].manuallyUnlocked` and toggled from the adult panel.
+
+## Navigation and adult surfaces
+
+**No router.** `App.tsx` holds a `view` union:
+
+```ts
+type View =
+  | { kind: 'calendar' }
+  | { kind: 'mission'; day: MissionDay }
+  | { kind: 'adult-gate' }
+  | { kind: 'adult-panel' }
+  | { kind: 'adult-album' }
+  | { kind: 'preview'; day: MissionDay }
+```
+
+**Child flow stays closed.** The footer exposes a neutral "Zona de adultos" entry, never a demo toggle. The calendar no longer advertises demo mode. `demoMode` and the unlocked session are React state and are never persisted.
+
+**Defence in depth.** `effectiveDemoMode = adultUnlocked && demoMode`, and `previewing = adultUnlocked && view.kind === 'preview'`. If the session is not unlocked, the panel and preview cannot render and the demo store cannot replace child progress. `showAdultGate` also renders the gate if a stale view points at an adult surface, including the album, while locked.
+
+**Private album surface.** `adult-album` is reachable only from the unlocked `AdultPanel`. It renders the album list, gallery import, direct photo capture, previews, downloads, deletion confirmations and ZIP export. The child calendar, mission panel and footer never render album media, a camera surface or a link to the list. Direct capture mounts only inside `AlbumPanel`, so the child flow never requests camera permission. Day 7 may offer to save its own new recording from the mission result, but that write does not expose any existing memory and success is reported only after IndexedDB resolves.
+
+**Adult demo mode**
+
+| Property | Behaviour |
+|----------|-----------|
+| Activation | Only from the unlocked adult panel |
+| Unlocks | `adultPreview: true`, so every day opens without waiting |
+| Progress | Separate demo store; never calls `saveAppState` |
+| Config | Reads the live child hints so the preview matches the real configuration; `hidingSpot` is never rendered outside the panel |
+| Return to panel | Keeps the demo active so the panel can exit or reset it |
+| Exit | Panel button, demo bar button or locking the panel |
+| Reset | Clears `los24regalos:demo:v1` and reports a failed clear |
+
+**Preview** opens a specific mission with `adultPreview: true`, uses the isolated demo store and returns to the adult panel. It never mutates child progress. Because preview and demo share the demo store, progress created in a preview is visible only in those adult surfaces. A persistent preview bar identifies the day and states that nothing is written to the child calendar. The mission back button is labelled "Volver al panel familiar", and a separate "Salir al calendario infantil y bloquear" action clears `adultUnlocked` and demo mode before returning to the child calendar.
+
+## Parental PIN gate
+
+- **First-time setup.** When no PIN exists, the gate asks for a 4–8 digit PIN and a confirmation. `createPinRecord` derives a `PBKDF2-SHA-256` hash with 120k iterations, a random 16-byte salt and a 256-bit key, then `setParentalPin` stores the record in the child config.
+- **Session unlock.** When a PIN exists, the gate verifies it with `verifyPin`. A correct PIN unlocks the panel for the current session only; a reload locks it again.
+- **Session lock.** "Bloquear panel" clears the unlocked session and demo mode and returns to the child calendar.
+- **Storage failure.** If the browser rejects the save during setup, the panel stays usable for the session but shows a warning that the PIN was not saved and will be lost on reload. If a config edit or progress save fails, the global alert says so; the UI never claims a successful save.
+- **No recovery in this slice.** There is no PIN change or reset flow. Clearing browser storage resets the PIN and also erases local progress, which the documentation states instead of promising recovery.
+- **Security posture.** The digits are not stored in clear text, but anyone with browser-storage access can replace or remove the record. This is a household barrier for a shared family device, not cryptographic security.
+- **Secure context.** Web Crypto needs HTTPS in production or `localhost` in development. If it is unavailable, PIN creation fails visibly and verification cannot succeed.
+
+## Mission flow
+
+1. A door opens the generic mission panel.
+2. The panel shows the mission title, day, illustration, state and a short generic narrative.
+3. `resolveMissionAvailability` decides the stage:
+
+   | Mission status | Surface | Stage |
+   |----------------|---------|-------|
+   | `implemented` | Any | Real game through the `MISSION_GAMES` registry |
+   | `planned` | Demo or development | Clearly labelled demo/dev completion |
+   | `planned` | Production child | Honest "not available yet" notice |
+
+4. Registration seam: `src/components/missionGames.ts` maps a `MissionKind` to a game component. It currently registers `dance`, `memory`, `red-outfit`, `reindeer-maze`, `snowball-toss`, `spot-difference`, `karaoke`, `word-scramble`, `sock-pairs`, `patterns`, `guided-drawing`, `catch-gifts`, `no-laugh`, `jigsaw`, `bell-simon`, `math-lock`, `hidden-objects`, `snowman-build`, `symbol-cipher`, `cup-pyramid`, `charades`, `touch-bag`, `craft` and `finale`. Registering a game is the only step that makes an `implemented` entry playable.
+5. Game contract: every game receives `{ mission, cameraEnabled, onComplete }`. The game owns its rules and calls `onComplete` only after its success condition; it never writes progress directly. The panel then marks the mission complete through the existing `completeMission` transition, so demo/preview isolation and first-timestamp preservation still apply. When the child chooses "Repetir misión", the panel remounts the game with a local completion callback instead of `onCompleteMission`; the replay cannot call a progress transition.
+6. Before the mission starts, if no main hint is configured, the panel shows an adult configuration warning. After completion the main hint can be revealed and the reveal timestamp is persisted; if it is still missing, the same warning appears at the reward step. The app never displays an invented location.
+7. The optional location hint is shown only when configured.
+8. Gift confirmation stays available after mission completion even when the hint is missing, because an adult may give the clue verbally. The warning is informational; the app never fabricates a location.
+9. "I found the gift" awards the day's star. `confirmGiftFound` keeps the first timestamp, so repeated confirmations never duplicate the star. Replaying a completed mission shows a visible repetition state and a final notice; it keeps the existing star and timestamps untouched.
+10. The star tree shows 24 slots, the real count, a full-set celebration and, when applicable, the released days still pending.
+
+### Implemented games
+
+| Day | Game | Rules | Touch / mouse |
+|-----|------|-------|---------------|
+| 1 | Elf dance | Three-second countdown; approved cues at 04/08/12/16/20/24/28/32/36/40/44/48 s; statue pause at 32→36; final pose and celebration; restart or repeat; no camera, audio or recording | Tap start, restart or repeat |
+| 2 | Memory | 12 cards, 6 pairs; a mismatch flips back after a pause; no timer or attempt limit | Tap or click each card |
+| 3 | Red invasion | Manual checklist for two red garments and one red object; explicit family confirmation; no camera or automatic validation | Tap the three large checklist items, then confirm |
+| 4 | Reindeer maze | 5×7 snowy forest; collect 3 carrots, then reach the stable; blocked steps are ignored; no timer | Tap a neighbouring cell or the four large direction buttons |
+| 5 | Snowball fight | Five paper balls per round; three hits win; adult marks inside/outside; a short round is retried without penalty | Two large adult buttons, inside and outside |
+| 6 | Spot the difference | 5 approved changes; marking either illustration marks both; zone hint; single-image view for small screens; no penalty | Tap or click a change on either picture |
+| 7 | Silly carol | 3-second countdown plus a provisional 72-second lyric; six 12-second style blocks in approved order (robot, mouse, giant, sleepy, laugh, pop star); finishing completes without penalty; optional front/rear-camera recording with preview, explicit album save after success and individual download; the parental switch can hide the recording section without a permission request | Tap start, repeat, the opt-in recording controls and the album-save button when a clip exists; live preview is muted |
+| 8 | Word scramble | RENO, NIEVE, REGALO; letters go to the next empty slot and can be taken back | Tap or click letters and slots |
+| 9 | Sock pairs | Five pairs among ten socks; a mismatch clears after a pause; a playful 60-second timer can be extended or restarted and never gates success | Tap or click two socks |
+| 10 | Ornament patterns | The five approved sequences ABABA, ABCAB, AABAA, ABBAB, ABCABCA; choose the next token; retries unlimited | Tap or click a token |
+| 11 | Guided drawing | Closed-eyes reindeer on the approved 0/5/15/25/35/45/55/65-second script; repeat or extend any step; manual finish always available | Start, pause, repeat, extend, reset and finish buttons |
+| 12 | Gift rain | Move the basket horizontally; catch 15 gifts; fall speed and spawn rate grow smoothly; no lives, penalty or time limit | Drag or point inside the field, or use two arrow buttons |
+| 13 | No laughing | Two 30-second rounds; no tickling; the timer or a manual button ends each round; both rounds complete with no mandatory winner | Start the round, end it early or use the timer |
+| 14 | Maths chest | Discover star = 2 from tree = 5, gift = 3 and reindeer = 4; solve 6, 9 and 5; enter code 695; progressive help; no penalty | Tap or click number keys and lock digits |
+| 15 | Elf hands | Build the 3–2–1 pyramid with six cups while wearing socks or mittens; mark the three rows, confirm manually; playful 60-second timer can be extended or restarted | Tap or click row, timer, restart and confirmation buttons |
+| 16 | Jigsaw | 3×3 portrait; any two pieces swap; model view is read-only | Tap two pieces or drag one onto another |
+| 17 | Silent elf | Three distinct animals drawn from a bank of twelve; each card hidden by default; show/hide without revealing audio; manual hit per animal; no camera | Tap or click show, hide and confirmed-hit buttons |
+| 18 | Bell Simon | 4 bells; 5 cumulative rounds of 2 to 6 notes; replay and retry after a miss | Tap or click the four bells |
+| 19 | Hidden objects | Find key, sock, carrot, bell, teddy and candy; normalized scene; zoom and pan controls; zone hint; the six objects are invisible hit areas at normalized coordinates until found, so no emoji or visible button reveals them; Trasto is an optional decoy | Tap or click the scene coordinates, zoom, and pan with the arrow pad |
+| 20 | Mystery bag | Three safe objects in an opaque bag; identify by touch without looking; three manual hits that can be undone; no camera | Tap or click the three manual hit markers |
+| 21 | Snowman | Copito's random hat, scarf, nose and buttons; three variants per category; observe 15 s; rebuild and consult the model; unlimited retries | Tap or click one of three variants per category |
+| 22 | Symbol cipher | Fixed 13-symbol alphabet exactly as approved; built-in A–Z keyboard; decipher RENO, MAGIA and REGALO; no penalty | Tap or click on-screen letters |
+| 23 | Surprise for Trasto | Choose a drawing, letter or craft; change the choice until an explicit manual confirmation; farewell message; no photos, video or camera | Tap or click one of three large options and the confirmation button |
+| 24 | Final mission | Intelligence: reindeer = 4, code 64. Memory: three independent 3/4/5-note bell sequences, replay and retry. Magic: LUZ MAGIA with the day 22 alphabet and manual pronunciation. All three light a provisional sleigh scene; no timer | Tap or click number keys, bells, cipher letters and manual confirmation buttons |
+
+- Pure rules live in `src/domain/games/` and are independently testable: `dance.ts`, `memory.ts`, `redOutfit.ts`, `reindeerMaze.ts`, `snowballToss.ts`, `spotDifference.ts`, `karaoke.ts`, `karaokeRecording.ts`, `wordScramble.ts`, `sockPairs.ts`, `patterns.ts`, `guidedDrawing.ts`, `catchGifts.ts`, `noLaugh.ts`, `jigsaw.ts`, `bellSimon.ts`, `mathLock.ts`, `hiddenObjects.ts`, `snowman.ts`, `symbolCipher.ts`, `cupPyramid.ts`, `charades.ts`, `touchBag.ts`, `craftSurprise.ts`, `finalIntelligence.ts`, `finalMemory.ts`, `finalMagic.ts`, `finalMission.ts`, the shared `timer.ts` and `shuffle.ts`.
+- Game state is local React state. Only mission completion is persisted, through the existing progress record.
+- Day 3 keeps three independent checklist flags. The confirmation button appears only when all three are marked, and it never touches camera or media APIs.
+- Day 4 requires all three carrots and the stable; arriving at the stable early only shows how many carrots are missing.
+- Day 5 stores throws, hits and a `playing`/`won`/`round-lost` phase. Three hits finish the round immediately; five throws under three hits only offer a fresh round with five new balls.
+- Day 9 stores ten socks in five pairs. Matching locks a pair, a mismatch clears after a short pause, and the countdown state is independent from the solved state.
+- Day 6 stores `found` once per difference, so a change marked in one picture is shown as found in both. A wrong tap is feedback only. The zone hint iterates over the next unfound change and highlights a padded region, never the exact hotspot.
+- Day 7 derives completion from the clamped countdown-plus-song timeline, so no score, microphone result or recording state can fail the mission. The lyric and six style blocks are provisional data. Recording is a separate opt-in UI layer built on the pure MIME/constraint helpers.
+- Day 10 keeps the approved sequences and answers as data. A wrong token only shows feedback; the next pattern remains locked until the correct token is chosen and acknowledged.
+- Day 11 derives each step duration from the approved absolute times. Extending adds time to the current step, repeating restarts it, and the manual finish flag is independent from `scriptComplete`.
+- Day 12 uses a frame-capped simulation. Each catch raises the fall speed by a bounded step while the spawn interval shrinks, so the ramp is smooth and never becomes an instant loss. Missed gifts are counted but have no effect on completion.
+- Day 13 stores a two-step round state machine. Finishing the first round only opens a break, never the mission success; the second finish completes both rounds regardless of who laughed.
+- Day 18 is silent by design in this phase: bells use colours and tone labels, replaying shows the sequence again, and no background music plays during a sequence. Real tones belong to the pending audio phase.
+- Day 16 uses `game.jigsaw.portrait` from the central asset catalog. It is a provisional SVG split by CSS `background-position`; swapping pieces changes which fragment each slot shows.
+- Day 14 stores the approved values and operation terms once. The hidden value is not recorded until it is correct, and the chest opens only when the hidden value, all three operations and code 695 are complete. The first aid substitutes drawings with numbers; the second states that the star is what fills the gap from 3 to 5.
+- Day 19 uses six normalized object rectangles and a padded zone-hint rectangle. The scene is transformed by CSS for zoom and pan; the object rules stay independent of that visual state. Wrong taps are feedback only, and Trasto is decorative and never counted.
+- Day 21 caps each random pick to one of three variants per category, exposes a `SNOWMAN_OBSERVE_MS` constant of 15 seconds and switches from `observing` to `building` only after the observation. A full wrong combination stays editable; the model is a read-only view of the target.
+- Day 22 keeps all thirteen symbol-letter pairs in declaration order and derives each round from the same table. The keyboard appends only up to the current word length, and a correct word needs an explicit advance before the next one.
+- Day 15 derives the row order from `CUP_PYRAMID_ROWS = [3, 2, 1]`. Rows are marked in order, the finished stack becomes `ready`, and only the explicit `confirmCupPyramid` completes it. The timer reuse keeps zero harmless and supports extension or restart.
+- Day 17 draws three distinct animals with the shared shuffle, keeps every card hidden by default, and hides the next card after a manual hit. There is no audio path at all, so no voice can reveal the answer, and no camera is requested.
+- Day 20 stores one manual mark per identification slot. The list of safe ideas is adult guidance only; the rules never claim to know what is actually inside the bag, and marks can be toggled before completion.
+- Day 23 keeps the three handmade options in one domain list. A selection can be changed until `confirmCraftSurprise` locks it, and completion shows the farewell without any media API.
+- Day 1 keeps the approved cue times in one immutable list. The 32→36 gap is modelled as the statue cue staying active for four seconds; the final pose opens a four-second celebration and then completion. The timeline is advanced by a local interval and cleaned up on unmount. No media API is imported.
+- Day 24 reuses `bellSimon.ts` for the memory crystal with three independent 3/4/5-note sequences and reuses `symbolCipher.ts` for LUZ and MAGIA. The intelligence module keeps reindeer = 4 and code 64. Magic completion requires deciphered words plus an explicit manual pronunciation confirmation; there is no microphone or speech recognition. The final scene is provisional and only hands the child to the existing configured last hint.
+
+## Day 7 karaoke and optional recording
+
+| Topic | Decision |
+|-------|----------|
+| Timeline | 3-second countdown plus a provisional 72-second lyric, 75 seconds total and inside the approved 60–90-second window. Six 12-second style blocks follow the approved order; the song end completes the mission with no score or penalty |
+| Styles | Robot, mouse, giant, sleepy, laugh and pop star. Each shows a short child-facing instruction and a provisional catalog glyph |
+| Recording opt-in | Unchecked by default. Marking the checkbox is the explicit action that requests permissions. The front camera is the default; the front/rear selector is only enabled before the song starts |
+| Parental camera switch | `config.parental.cameraEnabled` gates the whole recording section. When false, no checkbox or camera control is rendered and no `getUserMedia` call is made; the song stays fully playable |
+| Late camera request | A pending `getUserMedia` is invalidated when the song completes or the mission unmounts. If tracks arrive afterwards they are stopped immediately instead of attaching to a finished session; layout-effect refs close the window before a pending promise microtask |
+| Media graph | `getUserMedia` requests video with `facingMode: { ideal }` plus audio. The microphone is routed through an `AudioContext` `MediaStreamDestination` when possible; the raw stream is the fallback if the mix cannot start |
+| Container | Candidates prefer `video/webm` with VP9/VP8 plus Opus, then WebM, then MP4/QuickTime only when `isTypeSupported` reports support. No explicit preference means MediaRecorder chooses its own default; MP4 is never assumed |
+| UI out of video | MediaRecorder receives the camera/microphone stream only. The karaoke DOM, lyrics, style cards and progress UI are never part of the recording |
+| Failure handling | Missing APIs, denied permissions, video-only fallback, audio-mix failure, recorder errors and zero-byte blobs show a clear notice. The song, completion and repeat flow remain available |
+| Preview and cleanup | The live preview is muted to avoid feedback. The recorded blob gets a temporary `objectURL` and a download link. Leaving the mission stops the recorder, camera/microphone tracks and audio context and revokes the URL |
+| Album boundary | The clip stays temporary until the family taps an explicit save button. That button writes to IndexedDB through `onSaveRecording`; success is shown only when the promise returns `ok: true`. The download link remains a fallback, and existing album media is never exposed here |
+| Album save failure | Missing IndexedDB, quota, blocked storage, a missing callback or a rejected transaction keep the clip unsaved and show a clear notice with a retry. The mission completion is independent from the save |
+
+**Pending limits**
+
+- The final authorized carol, instrumental base, music/voice mix and Trasto overlay are not implemented.
+- Real-device QA remains: front/rear switching, separate camera and microphone denials, audio-context suspension, Safari MP4 vs Chromium WebM negotiation, long recordings, low storage, background/foreground changes, track release after exit and a slow permission request resolving after the song ends.
+- Automated coverage is limited to pure timeline, MIME, constraint and capability rules plus the album-store save contract; no browser media or DOM test runner is installed.
+
+## Private album (P10)
+
+| Topic | Decision |
+|-------|----------|
+| Ownership | The album is a parental surface. `adult-album` is reachable only from the unlocked `AdultPanel`, and the child calendar, mission panel and footer never render album media |
+| Storage | IndexedDB database `los24regalos-album`; `metadata` store for small records, `media` store for `{ id, blob }`. Saves and deletes touch both stores in one transaction |
+| Multiple files | Any number of photos and videos per day, each tagged with `day`, `createdAt` and `source` (`recording`, `import` or `capture`) |
+| Import | A hidden `<input type="file" accept="image/*,video/*" multiple>` opened by a large button. The adult chooses the mission day. It remains the fallback when camera capture is unavailable |
+| Camera capture | Adult-only section in the album. The adult chooses the day, opens the front camera, may switch to the rear camera before capture, reviews a frozen image, and explicitly saves or discards it. The camera is never requested in the child flow |
+| Listing | Grouped by mission day ascending; newest memory first inside a day. Each card shows kind, size, creation date and source |
+| Preview | Lazy object URL created only when the card is expanded; image or video controls. The URL is revoked when the preview closes or the card leaves |
+| Download | Each memory downloads individually with its sanitized original name. A missing blob is reported instead of downloading an empty file |
+| Deletion | Inline confirmation before deleting. Success is reported only after the IndexedDB transaction resolves |
+| ZIP export | In-repository ZIP32 writer using the STORE method (no compression). Entries are named `dia-07/foto-01.jpg`, `dia-07/video-01.webm`, plus `LEEME.txt`. No package or service is used |
+| ZIP limits | Classic ZIP32: at most 65,535 entries and 4,294,967,295 bytes per file/offset. There is no ZIP64, compression or streaming. Limit failures are shown and the individual download remains available |
+| ZIP verification | Automated tests parse names, contents and CRCs; a system `unzip -t` check was also run against a generated archive during P10 |
+| Persistent storage | `navigator.storage.persist()` is requested when the adult opens the album and, best effort, when day 7 saves. `persisted()` and `estimate()` feed the panel. Unsupported, denied and estimate-failure states are all shown |
+| Quota and failures | IndexedDB errors are mapped to `quota`, `unavailable`, `blocked`, `transaction` or `not-found`. A failed import or save never claims success; the panel suggests exporting and freeing space |
+| Data-loss warning | The album states that clearing browser data, uninstalling or storage pressure can erase memories, and recommends periodic export |
+| Privacy | No upload, backend, sync or external service. Object URLs are local; media stays in the browser database |
+| Not included | Encryption at rest, import from a share sheet, ZIP64/compression, background backup, album video capture and executed real-device media QA (pending checklist in `docs/QA_CAMERA_CAPTURE.md`) |
+
+## Direct photo capture (P11)
+
+| Topic | Decision |
+|-------|----------|
+| Surface | The capture section lives inside `AlbumPanel`, reachable only through the unlocked parental panel. No child calendar, mission panel, preview or footer mounts the capture component |
+| Parental camera switch | When `config.parental.cameraEnabled` is false, `AlbumPanel` shows a continuity notice instead of the capture form and `AlbumCameraCapture` also refuses to call `getUserMedia`. Gallery import remains available |
+| Day selection | The adult picks any mission day 1–24 before opening the camera. The chosen day is stored in the new record's metadata |
+| Camera default | `getUserMedia` requests video only (`audio: false`) with `facingMode: { ideal: 'user' }`. The front camera is the default; the rear camera is one tap away before capture |
+| Camera switching | Switching stops the current stream before requesting the other side. A failure keeps the component open with a clear notice and a retry, and gallery import remains available |
+| Preview | A muted, inline `playsInline` video shows the live stream. No microphone track is requested, so no audio is captured or monitored |
+| Capture | The button freezes the current frame through `<video>` → `<canvas>` → `toBlob('image/jpeg', 0.9)`. Frames are clamped to 1600 px on the longest side without upscaling. The camera is stopped after a successful capture so the frozen image is reviewed without a live feed |
+| Explicit save | The shot stays in memory and is never written automatically. Only the explicit "Guardar en el álbum privado" button calls the album store with `source: 'capture'`; success appears only after the IndexedDB transaction resolves |
+| Discard and cancel | "Descartar y repetir" revokes the preview URL and reopens the camera. "Cancelar sin guardar" closes the section without touching storage. Both paths stop every track |
+| Track release | Streams stop on capture success, facing change, retake, cancel, close and unmount. A request that resolves after unmount or after a newer request is stopped immediately |
+| Failure handling | Missing `getUserMedia`, missing `canvas.toBlob`, permission denial, missing or busy camera, failed switch, empty frame, null blob, thrown `toBlob`, empty blob, quota, blocked storage and transaction failures all surface as notices. None blocks gallery import or the rest of the album |
+| Privacy | No upload, backend, AI, sync or external service. Object URLs are local and revoked. The camera is absent from child mode by construction, not only by CSS |
+| QA | The automated suite covers capability decisions, size clamping, file naming, the canvas/blob orchestration and storage acceptance. Real-device execution is documented in `docs/QA_CAMERA_CAPTURE.md` and remains pending |
+
+Hiding spots are rendered only by the adult panel. Future-day hints are never rendered in the child calendar, and the child mission panel only reveals a hint after that mission is completed in the active (child) progress.
+
+## Assets
+
+`src/domain/assets.ts` remains the single source of truth for artwork keys and paths.
+
+- The current UI uses emoji placeholders marked `provisional: true`, plus one provisional SVG for the day 16 portrait.
+- Game-specific entries (`game.memory.*`, `game.maze.*`, `game.spot.*`, `game.word.snow`, `game.pattern.*`, `game.catch.basket`, `game.simon.bell`, `game.jigsaw.portrait`, `game.math.*`, `game.hidden.*`, `game.snowman.*`, `game.cipher.*`, `game.pyramid.*`, `game.charades.*`, `game.touch.*`, `game.craft.*`, `game.dance.*`, `game.karaoke.*`, `game.final.*`) live in the same catalog; components never define their own glyph or media paths. The day 6 and day 19 scenes are composed from those catalog entries and do not ship separate illustrative files.
+- Final art swaps an entry to `kind: 'image'` and sets `src` to a `public/`-relative path.
+- `resolveAssetPath` applies Vite's base URL, so components never build asset URLs themselves.
+- No component hard-codes a media path or bypasses the central catalog.
+
+## Audio system
+
+`docs/AUDIO.md` owns the full design. The decisions that affect the rest of the app:
+
+| Topic | Decision |
+|-------|----------|
+| Catalog | `src/domain/audioCatalog.ts` is the single source of truth for music, voice and effects. Every current entry is provisional; music and effects use synthesized tones and voice entries are silent placeholders |
+| Manager | `src/audio/audioManager.ts` is the only Web Audio adapter. It creates or resumes the context only from a user interaction, never blocks game logic and degrades to silence with a clear message |
+| Preferences | Music, voice, effects, master mute and volume live under `los24regalos:audio:v1`, separate from `AppState`. Corrupt snapshots fall back to defaults |
+| Mixing | `resolveAudioMix` is the single gain rule. Music ducks to 25% only while a voice is audible; disabled voice or muted master never lowers the music |
+| Effects | Fire-and-forget. App-level success and celebration cues run from explicit completion clicks; a failed effect cannot alter mission progress |
+| Cleanup | `MissionAudioScope` stops mission-scoped audio on unmount or day change, and the app shell calls `stopAll` on unmount |
+| UI | A child silence/volume bar plus accessible parental channel, volume, test and stop controls. Neither exposes hints, hiding places or album content |
+| Pending | Recorded narration, licensed music, game-level audio wiring and real-device audio QA |
+
+## Calendar date refresh
+
+The local clock is captured in React state and refreshed every minute. This opens a door at local midnight without a reload and avoids reading an impure clock during render.
+
+## Accessibility and error recovery
+
+| Topic | Decision | Why |
+|-------|----------|-----|
+| View focus | Each open view receives focus on its `h1`/`h2` (`tabindex=-1`). Closing a mission, preview, album or parental surface restores focus to the door, day summary or album trigger that opened it. | Keyboard and screen-reader users keep their place instead of landing at the top of a remounted page. |
+| Live counters | Visible dance, karaoke and timers may update every second, but only milestone announcements (for example 30 s, 10 s and zero) enter a polite live region. The visible seconds text is no longer a `role="status"`. | Prevents a screen reader from announcing every tick while keeping meaningful progress cues. |
+| Cipher semantics | The thirteen symbols have stable Spanish accessible names. The reference table announces the full "symbol -> letter" row, while the secret word announces only the symbol names. | Days 22 and 24 become usable without sight without leaking the answer letter in the puzzle word. |
+| Touch targets | Compact critical controls use a `44px` minimum: cipher keys, album card actions, camera-facing buttons, link-style navigation and check rows. | Meets the approved minimum target without changing the visual design or adding a dependency. |
+| Recovery | A class error boundary wraps the app. It renders a clear recovery screen with "Volver al calendario" and "Recargar la página", remounts the app at the calendar view and never shows stack traces or internal details. | A broken mission cannot leave a blank screen or require a full data reset. |
+| Tests | `test/a11y.test.ts` covers milestone announcements and the touch-target constant; the symbol-cipher suite covers the accessible names and reference descriptions. | Pure rules stay verifiable without a browser test runner. |
+
+Screen-reader announcement timing, real touch ergonomics and browser error-boundary behaviour still need device QA; they are not claimed as covered by the domain tests.
+
+## Tests
+
+`npm test` uses only the installed toolchain:
+
+1. `tsc -p tsconfig.test.json` compiles the domain, storage and security modules plus the tests into `test/.build` as CommonJS.
+2. `node --test 'test/.build/test/**/*.test.js'` runs Node's built-in test runner.
+
+No test framework or new dependency was added. `test/package.json` sets `"type": "commonjs"` so the root `"type": "module"` does not make the compiled output ESM. The build output is git-ignored.
+
+Coverage includes:
+
+- Local-midnight release, today detection, adult preview and manual unlock.
+- The four day states and the "found gift stays visible" rule.
+- One star per day, first-timestamp preservation and immutable transitions.
+- Hint reveal persistence and star-tree completion.
+- Child/demo storage round-trips, corrupt data fallback, save failure, demo-reset failure and store isolation.
+- PIN format, creation, verification, tamper rejection and storage round-trip.
+- Pure config patches for hints, hiding spots, manual unlock and PIN storage.
+- The 24-mission catalog, all twenty-four implemented days and the `status`-first availability rule.
+- Day 7 karaoke: 60–90-second duration, contiguous provisional lyric, six style blocks, countdown and completion boundaries, restart, MIME negotiation and extension, camera constraints and recording capability fallbacks.
+- Memory: deck composition, matching, mismatch resolution, idempotent flips and full completion.
+- Red invasion: three independent checklist flags, unchecking and completion only with two garments plus one object.
+- Snowball fight: five-ball rounds, three-hit wins, five-throw feedback rounds, ignored post-round throws and fresh retries.
+- Sock pairs: ten-sock composition, pair locking, mismatch resolution, unlimited misses and five-pair completion.
+- Guided drawing: approved absolute times, paused timelines, per-step extension, repeat, reset, full script completion and timer-independent manual finish.
+- No laughing: two 30-second rounds, start/end gating, a break between rounds and completion without a winner condition.
+- Timers: safe countdown creation, start/pause/zero clamping, extra time and clock formatting.
+- Reindeer maze: reachable catalog, blocked and border steps, carrot collection without duplicates, stable-before-carrots rejection and full completion.
+- Spot the difference: five unique normalized rectangles, shared found state across both pictures, unlimited misses, zone-hint bounds and full completion.
+- Word scramble: letter preservation, placement/removal, duplicate letters, wrong orders and per-word solving.
+- Patterns: the five approved sequences and answers, option derivation, wrong-choice retries, acknowledgement and full completion.
+- Gift rain: basket clamping, aligned catches, harmless misses, bounded speed and spawn growth, deterministic spawning and completion at 15.
+- Jigsaw: valid permutations, unsolved starts, reversible swaps, invalid swaps and solved detection.
+- Bell Simon: cumulative round lengths, input gating, ordinary progress, unlimited retries, wrong-note recovery and five-round completion.
+- Maths chest: approved values, operations and code, hidden-value discovery, blocked operations, unlimited wrong answers, progressive aid cap, keypad length, and the combined success condition.
+- Hidden objects: six unique normalized rectangles, shared found state, unlimited misses, zone-hint bounds and full completion.
+- Snowman: 15-second observation, three variants per category, deterministic target selection, building-phase gating, editable wrong combinations and full-combination completion.
+- Symbol cipher: exactly thirteen unique symbol-letter pairs in specification order, accessible names and reference descriptions, RENO/MAGIA/REGALO sequences, keyboard length limit, wrong and incomplete answers, explicit advance and three-word completion.
+- Elf-hands pyramid: approved 3–2–1 rows and six cups, ordered row marking, ready-before-confirmation gating, manual confirmation and penalty-free reset.
+- Silent elf: twelve-animal bank, three distinct random draws, hidden-by-default cards, show/hide toggling, per-hit advancement and three-hit completion.
+- Mystery bag: three manual hit slots, independent toggling, undo support and completion only with all three marks.
+- Surprise for Trasto: three handmade options, changeable selection, confirmation gated on a choice and locked after confirmation.
+- Elf dance: exact approved cue times and labels, start-gated countdown, statue cue boundaries, celebration and completion windows, clamped timeline and restart behaviour.
+- Final mission intelligence: approved values, operations and code 64, hidden reindeer discovery, blocked and incomplete codes, unlimited retries and completion.
+- Final mission memory: three independent 3/4/5-note sequences, non-cumulative construction, reuse of the Simon retry rules and full completion.
+- Final mission magic: day 22 alphabet reuse for LUZ and MAGIA, cipher input reuse, manual pronunciation gating and completion only after both words and pronunciation.
+- Final mission orchestration: the three required crystals in approved order, idempotent completion and final completion only with all three.
+- Album domain: MIME/extension resolution, unsupported files, name sanitization, day/size/date/id validation, day grouping, sorting, export manifest names and byte formatting.
+- Album capture: capability resolution, aspect-ratio size clamping, timestamped file names, and the full canvas/blob pipeline including not-ready, missing canvas, draw failure, null/throwing `toBlob` and empty-blob codes with mocks.
+- Album store and adapter: save/list/delete round-trips, quota mapping, empty and missing-blob export failures, capture-source metadata acceptance, IndexedDB schema creation and unavailable-IndexedDB handling with in-memory and mock factories.
+- ZIP writer: standard CRC-32, stored contents, UTF-8 names, an empty archive, the entry limit and the byte limit. A generated archive was also checked with the system `unzip -t` tool.
+- Persistent storage: granted, denied, unsupported, existing grant, estimate failure and invalid estimate values.
+- Accessibility helpers: the 44 px touch-target constant and milestone-only countdown announcements, including zero, custom checkpoints, fractional ticks and invalid values.
+
+There is still no automated DOM or component test runner. UI behaviour is verified by type-check, build and review; adding a browser test tool would be a separate, deliberate dependency decision.
+
+## Verification
+
+| Command | Covers |
+|---------|--------|
+| `npm run build` | Type-check (`tsc -b`) and static bundle |
+| `npm run lint` | oxlint rules from the scaffold |
+| `npm test` | Domain, calendar, star, hint, PIN, config, storage, the twenty-four game-rule suites, day 7 recording helpers, album domain/store/adapter, direct-capture rules, ZIP writer, persistent-storage and accessibility helpers |
+| `npm run dev` | Manual mobile viewport check |
+
+## Risks and deferred work
+
+- **No DOM/component tests:** the domain rules are covered; React interaction, focus restoration, live-region timing and real touch ergonomics are reviewed manually.
+- **Error recovery scope:** the boundary catches render-time failures in the React tree. It does not convert an event-handler exception, a storage failure or a browser-media failure into a recovered view; those paths already report their own messages.
+- **PIN recovery:** a forgotten PIN needs a storage reset that also erases progress. A recovery flow is future work.
+- **PIN strength:** a short numeric PIN plus local storage access is a domestic deterrent, not cryptographic security.
+- **Clock trust:** the local device date drives unlocks. Changing the clock bypasses the calendar; acceptable for a family app.
+- **Storage durability:** clearing browser data loses PIN, config, child and demo progress, and album media. The album states this and recommends exporting; persistent storage is requested but can still be denied or evicted.
+- **Album privacy:** the album is hidden behind the parental PIN in the UI, but the IndexedDB contents are readable by anyone with browser-storage access. It is a household boundary, not encryption.
+- **Album export limits:** the ZIP writer is classic ZIP32 and builds the archive in memory. Very large albums fail with a clear message and fall back to individual downloads; there is no ZIP64, compression or streaming.
+- **Album capture:** direct photos are implemented, but real-device QA is still pending for permission variants, front/rear switching on phones and laptops, track release after leaving, canvas behaviour on older Safari, and capture at low storage. The checklist lives in `docs/QA_CAMERA_CAPTURE.md`; there is no automated browser-media test runner.
+- **Demo/preview store:** both share the isolated demo snapshot. They never touch child progress, but they do share progress with each other by design.
+- **Day 7 recording limits:** the clip is temporary until an explicit save succeeds, and the download remains a fallback. The final carol and Trasto overlay remain future work. The UI never claims that a recording was saved before IndexedDB confirms it.
+- **Game audio:** day 1 uses visual cues, day 18 uses visual tone labels and the day 24 memory crystal reuses that silent bell UI; game components were intentionally left unchanged. The reusable audio layer now exists, but real tones, music, narration and per-game wiring belong to the next audio-content phase.
+- **Observation pause:** day 21 enforces the fifteen-second observation before rebuilding. Adults can accompany the child, but there is no skip control in this slice.
+- **Game UI and media tests:** game rules are covered by pure domain tests; React interaction and the camera/microphone path are verified by type-check, build and manual review because no browser test tool is installed. Album storage is covered through mock IndexedDB factories, not a real browser.
+- **Album real-device QA:** opening the database in Safari private mode, quota pressure, very large video imports, preview memory use, ZIP time and download placement still need real-device checks.
+- **Album media QA:** no automated browser test exercises object URLs, video playback or download placement.
+- **Audio and final art:** recorded narration, licensed music, final effects and production artwork are pending, including a replacement for the provisional jigsaw SVG and the final authorized carol. The audio infrastructure, preferences, ducking, cleanup and fallback behaviour are implemented; real-device audio QA is tracked in `docs/QA_AUDIO.md`.
+- **PWA/offline:** deferred; the app currently needs a network load at least once per session.
+
+## Next step
+
+Phase P13 should execute `docs/QA_CAMERA_CAPTURE.md` and `docs/QA_AUDIO.md` on the family device, then replace the provisional day 7 carol and synthesized audio with authorized recordings, licensed music and the Trasto overlay. Real-device camera/microphone/storage/audio QA and final artwork remain separate deliberate phases. The parental panel, PIN gate, demo isolation, album boundary, capture surface, audio infrastructure and storage-error reporting stay stable.

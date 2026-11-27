@@ -1,0 +1,209 @@
+import { test } from 'node:test'
+import { strict as assert } from 'node:assert'
+import { getAsset } from '../src/domain/assets'
+import {
+  getMission,
+  MISSIONS,
+  resolveMissionAvailability,
+} from '../src/domain/missions'
+import { MISSION_DAYS, TOTAL_MISSIONS, type MissionDefinition } from '../src/domain/types'
+
+const IMPLEMENTED_DAYS = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+  23, 24,
+] as const
+
+test('the catalog lists all 24 approved missions exactly once', () => {
+  assert.equal(TOTAL_MISSIONS, 24)
+  assert.equal(MISSIONS.length, 24)
+  assert.deepEqual(MISSIONS.map((mission) => mission.day), [...MISSION_DAYS])
+  assert.equal(new Set(MISSIONS.map((mission) => mission.day)).size, 24)
+})
+
+test('only the approved days are implemented', () => {
+  for (const mission of MISSIONS) {
+    const expected = IMPLEMENTED_DAYS.includes(
+      mission.day as (typeof IMPLEMENTED_DAYS)[number],
+    )
+    assert.equal(
+      mission.status,
+      expected ? 'implemented' : 'planned',
+      `day ${mission.day}`,
+    )
+  }
+})
+
+test('the implemented days keep their approved mechanics', () => {
+  assert.equal(getMission(1)?.kind, 'dance')
+  assert.equal(getMission(2)?.kind, 'memory')
+  assert.equal(getMission(3)?.kind, 'red-outfit')
+  assert.equal(getMission(4)?.kind, 'reindeer-maze')
+  assert.equal(getMission(5)?.kind, 'snowball-toss')
+  assert.equal(getMission(6)?.kind, 'spot-difference')
+  assert.equal(getMission(7)?.kind, 'karaoke')
+  assert.equal(getMission(8)?.kind, 'word-scramble')
+  assert.equal(getMission(9)?.kind, 'sock-pairs')
+  assert.equal(getMission(10)?.kind, 'patterns')
+  assert.equal(getMission(11)?.kind, 'guided-drawing')
+  assert.equal(getMission(12)?.kind, 'catch-gifts')
+  assert.equal(getMission(13)?.kind, 'no-laugh')
+  assert.equal(getMission(14)?.kind, 'math-lock')
+  assert.equal(getMission(15)?.kind, 'cup-pyramid')
+  assert.equal(getMission(16)?.kind, 'jigsaw')
+  assert.equal(getMission(17)?.kind, 'charades')
+  assert.equal(getMission(18)?.kind, 'bell-simon')
+  assert.equal(getMission(19)?.kind, 'hidden-objects')
+  assert.equal(getMission(20)?.kind, 'touch-bag')
+  assert.equal(getMission(21)?.kind, 'snowman-build')
+  assert.equal(getMission(22)?.kind, 'symbol-cipher')
+  assert.equal(getMission(23)?.kind, 'craft')
+  assert.equal(getMission(24)?.kind, 'finale')
+})
+
+test('mission illustrations resolve through the central asset catalog', () => {
+  for (const mission of MISSIONS) {
+    assert.equal(getAsset(mission.illustration).kind, 'emoji')
+  }
+
+  assert.equal(getMission(1)?.title, 'El baile del duende')
+})
+
+test('the game resources come from the central asset catalog', () => {
+  for (const id of [
+    'game.memory.back',
+    'game.memory.reindeer',
+    'game.memory.snowman',
+    'game.memory.bell',
+    'game.word.snow',
+    'game.simon.bell',
+    'game.maze.reindeer',
+    'game.maze.carrot',
+    'game.maze.stable',
+    'game.maze.tree',
+    'game.spot.bauble.red',
+    'game.spot.bauble.blue',
+    'game.spot.clock.one',
+    'game.spot.clock.three',
+    'game.spot.hat',
+    'game.spot.carrot',
+    'game.pattern.star',
+    'game.pattern.bell',
+    'game.pattern.tree',
+    'game.catch.basket',
+    'game.jigsaw.portrait',
+    'game.math.tree',
+    'game.math.gift',
+    'game.math.reindeer',
+    'game.math.star',
+    'game.math.chest',
+    'game.hidden.key',
+    'game.hidden.sock',
+    'game.hidden.carrot',
+    'game.hidden.bell',
+    'game.hidden.teddy',
+    'game.hidden.candy',
+    'game.snowman.body',
+    'game.snowman.hat.top',
+    'game.snowman.scarf.red',
+    'game.snowman.nose.carrot',
+    'game.snowman.buttons.three',
+    'game.cipher.tree',
+    'game.cipher.sparkle',
+    'game.red.garment.one',
+    'game.red.garment.two',
+    'game.red.object',
+    'game.snowball.ball',
+    'game.snowball.target',
+    'game.snowball.hit',
+    'game.snowball.miss',
+    'game.sock.red',
+    'game.sock.green',
+    'game.sock.blue',
+    'game.sock.yellow',
+    'game.sock.purple',
+    'game.sock.clock',
+    'game.drawing.reindeer',
+    'game.drawing.pencil',
+    'game.laugh.child',
+    'game.laugh.adult',
+    'game.laugh.clock',
+    'game.pyramid.cup',
+    'game.pyramid.mitten',
+    'game.pyramid.clock',
+    'game.charades.hidden',
+    'game.charades.dog',
+    'game.charades.cat',
+    'game.charades.elephant',
+    'game.charades.lion',
+    'game.charades.monkey',
+    'game.charades.penguin',
+    'game.charades.frog',
+    'game.charades.duck',
+    'game.charades.rabbit',
+    'game.charades.bear',
+    'game.charades.horse',
+    'game.charades.fish',
+    'game.touch.bag',
+    'game.touch.hand',
+    'game.touch.spoon',
+    'game.touch.ball',
+    'game.touch.sponge',
+    'game.touch.hit',
+    'game.craft.drawing',
+    'game.craft.letter',
+    'game.craft.craft',
+    'game.craft.farewell',
+    'game.dance.jump',
+    'game.dance.turn',
+    'game.dance.crouch',
+    'game.dance.clap',
+    'game.dance.wiggle',
+    'game.dance.statue',
+    'game.dance.pose',
+    'game.dance.celebrate',
+    'game.karaoke.robot',
+    'game.karaoke.mouse',
+    'game.karaoke.giant',
+    'game.karaoke.sleepy',
+    'game.karaoke.laugh',
+    'game.karaoke.pop-star',
+    'game.final.santa',
+    'game.final.sleigh',
+    'game.final.gift',
+    'game.final.reindeer',
+    'game.final.crystal.intelligence',
+    'game.final.crystal.memory',
+    'game.final.crystal.magic',
+    'game.final.album',
+  ] as const) {
+    assert.equal(getAsset(id).provisional, true, id)
+  }
+
+  assert.equal(getAsset('game.jigsaw.portrait').kind, 'image')
+})
+
+test('mission status decides the child flow before the demo flag', () => {
+  const implemented: MissionDefinition = getMission(7)!
+  const planned: MissionDefinition = { ...implemented, status: 'planned' }
+
+  assert.equal(
+    resolveMissionAvailability(planned, { demoMode: false, development: false }),
+    'planned',
+  )
+  assert.equal(
+    resolveMissionAvailability(planned, { demoMode: false, development: true }),
+    'demo-completion',
+  )
+  assert.equal(
+    resolveMissionAvailability(planned, { demoMode: true, development: false }),
+    'demo-completion',
+  )
+  assert.equal(
+    resolveMissionAvailability(implemented, { demoMode: false, development: false }),
+    'game',
+  )
+  assert.equal(
+    resolveMissionAvailability(getMission(2)!, { demoMode: false, development: false }),
+    'game',
+  )
+})

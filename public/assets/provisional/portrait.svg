@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300" role="img" aria-label="Provisional portrait of Trasto the elf and Rodolfo the reindeer in the workshop">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f2044"/>
+      <stop offset="0.55" stop-color="#22335f"/>
+      <stop offset="1" stop-color="#3a1f3d"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dce9ff"/>
+      <stop offset="1" stop-color="#93aed6"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="300" height="300" fill="url(#sky)"/>
+
+  <!-- snow ground -->
+  <path d="M0 232 Q75 210 150 232 T300 228 V300 H0 Z" fill="url(#floor)"/>
+
+  <!-- moon -->
+  <circle cx="52" cy="46" r="24" fill="#ffe9a8"/>
+  <circle cx="44" cy="40" r="5" fill="#f5d78a"/>
+  <circle cx="60" cy="54" r="3.5" fill="#f5d78a"/>
+
+  <!-- stars -->
+  <g fill="#ffe9a8">
+    <polygon points="140,30 144,40 155,40 146,47 150,58 140,51 130,58 134,47 125,40 136,40"/>
+    <circle cx="220" cy="34" r="3"/>
+    <circle cx="190" cy="60" r="2.5"/>
+    <circle cx="270" cy="72" r="2.5"/>
+    <circle cx="30" cy="110" r="2"/>
+  </g>
+
+  <!-- christmas tree -->
+  <rect x="232" y="200" width="14" height="30" fill="#6b3f1d"/>
+  <polygon points="239,76 280,150 198,150" fill="#1f8a55"/>
+  <polygon points="239,112 286,196 192,196" fill="#177247"/>
+  <g fill="#ffd166">
+    <circle cx="232" cy="130" r="4"/>
+    <circle cx="254" cy="160" r="4"/>
+    <circle cx="214" cy="178" r="4"/>
+    <circle cx="252" cy="120" r="3"/>
+  </g>
+  <polygon points="239,66 244,78 257,78 247,86 250,99 239,91 228,99 231,86 221,78 234,78" fill="#ffe9a8"/>
+
+  <!-- trasto the elf -->
+  <g>
+    <rect x="112" y="214" width="12" height="42" rx="5" fill="#2f6f4f"/>
+    <rect x="132" y="214" width="12" height="42" rx="5" fill="#2f6f4f"/>
+    <rect x="106" y="248" width="22" height="10" rx="5" fill="#7a3d1f"/>
+    <rect x="128" y="248" width="22" height="10" rx="5" fill="#7a3d1f"/>
+    <rect x="104" y="160" width="48" height="62" rx="18" fill="#e05a4f"/>
+    <rect x="112" y="196" width="32" height="8" rx="4" fill="#ffd166"/>
+    <rect x="88" y="166" width="16" height="44" rx="8" fill="#e05a4f"/>
+    <rect x="152" y="166" width="16" height="44" rx="8" fill="#e05a4f"/>
+    <circle cx="128" cy="138" r="24" fill="#ffd9b8"/>
+    <circle cx="104" cy="138" r="6" fill="#ffd9b8"/>
+    <circle cx="152" cy="138" r="6" fill="#ffd9b8"/>
+    <circle cx="119" cy="135" r="3" fill="#1b1b2f"/>
+    <circle cx="137" cy="135" r="3" fill="#1b1b2f"/>
+    <path d="M118 146 Q128 154 138 146" fill="none" stroke="#b85c48" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M103 124 Q128 110 153 124 L150 118 Q126 104 106 118 Z" fill="#2f6f4f"/>
+    <path d="M103 124 Q128 116 153 124 L150 132 Q128 124 106 132 Z" fill="#2f6f4f"/>
+    <circle cx="156" cy="120" r="7" fill="#ffe9a8"/>
+    <rect x="100" y="126" width="56" height="8" rx="4" fill="#fff4e0"/>
+  </g>
+
+  <!-- rodolfo the reindeer -->
+  <g>
+    <rect x="180" y="214" width="12" height="42" rx="5" fill="#8a5a34"/>
+    <rect x="200" y="214" width="12" height="42" rx="5" fill="#8a5a34"/>
+    <ellipse cx="196" cy="188" rx="34" ry="28" fill="#a9713f"/>
+    <path d="M184 150 L176 128 L166 122 M176 128 L164 132 M208 150 L216 128 L228 120 M216 128 L226 134" fill="none" stroke="#6b3f1d" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="196" cy="158" rx="26" ry="22" fill="#bb8250"/>
+    <ellipse cx="170" cy="150" rx="8" ry="5" fill="#a9713f" transform="rotate(-25 170 150)"/>
+    <ellipse cx="222" cy="150" rx="8" ry="5" fill="#a9713f" transform="rotate(25 222 150)"/>
+    <circle cx="188" cy="154" r="3" fill="#1b1b2f"/>
+    <circle cx="204" cy="154" r="3" fill="#1b1b2f"/>
+    <ellipse cx="196" cy="170" rx="12" ry="9" fill="#f2d2b6"/>
+    <circle cx="196" cy="166" r="5" fill="#c0392b"/>
+    <rect x="168" y="196" width="56" height="9" rx="4" fill="#e05a4f"/>
+    <circle cx="196" cy="210" r="5" fill="#ffd166"/>
+  </g>
+
+  <!-- gifts -->
+  <g>
+    <rect x="34" y="244" width="38" height="34" rx="4" fill="#e05a4f"/>
+    <rect x="50" y="244" width="7" height="34" fill="#ffe9a8"/>
+    <rect x="34" y="256" width="38" height="7" fill="#ffe9a8"/>
+    <rect x="78" y="256" width="30" height="22" rx="4" fill="#2f6f4f"/>
+    <rect x="90" y="256" width="6" height="22" fill="#ffd166"/>
+    <rect x="78" y="264" width="30" height="6" fill="#ffd166"/>
+  </g>
+
+  <!-- snowflakes -->
+  <g fill="#ffffff" fill-opacity="0.85">
+    <circle cx="72" cy="84" r="2.5"/>
+    <circle cx="176" cy="92" r="2.5"/>
+    <circle cx="146" cy="72" r="2"/>
+    <circle cx="262" cy="40" r="2"/>
+    <circle cx="44" cy="196" r="2"/>
+  </g>
+
+  <!-- faint seam lines keep the three-by-three pieces readable -->
+  <path d="M100 0V300 M200 0V300 M0 100H300 M0 200H300" stroke="#ffffff" stroke-opacity="0.08" stroke-width="2"/>
+</svg>

@@ -1,0 +1,27 @@
+{
+  "name": "los-24-regalos-desaparecidos",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "test": "tsc -p tsconfig.test.json && node --test 'test/.build/test/**/*.test.js'",
+    "preview": "vite preview",
+    "verify:pages": "node scripts/verify-pages-build.mjs"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "oxlint": "^1.94.0",
+    "typescript": "~7.0.2",
+    "vite": "^8.4.0"
+  }
+}

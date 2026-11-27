@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["ES2023", "DOM"],
+    "module": "commonjs",
+    "types": ["node"],
+    "outDir": "test/.build",
+    "rootDir": ".",
+    "noEmit": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "verbatimModuleSyntax": false,
+    "moduleDetection": "force",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": [
+    "src/domain/**/*.ts",
+    "src/storage/**/*.ts",
+    "src/security/**/*.ts",
+    "test/**/*.ts"
+  ],
+  "exclude": ["src/domain/assetPath.ts", "test/.build"]
+}
