@@ -1,6 +1,7 @@
 import { getAsset } from '../domain/assets'
 import { countStars, hasStar, isAlbumComplete } from '../domain/progress'
-import { MISSION_DAYS, type MissionDay, type ProgressState } from '../domain/types'
+import { STAR_POSITIONS, STAR_SIZE_PERCENT } from '../domain/starTreeLayout'
+import type { MissionDay, ProgressState } from '../domain/types'
 import { AssetGlyph } from './AssetGlyph'
 
 interface StarTreeProps {
@@ -25,35 +26,40 @@ export function StarTree({ progress, pendingReleasedDays }: StarTreeProps) {
         <p className="tree__count">{starCount} / 24</p>
       </div>
 
-      <figure className="tree__scene">
+      <div className="tree__scene">
         <AssetGlyph
           asset={getAsset('ui.tree')}
           label={false}
           className="tree__scene-image"
         />
-      </figure>
 
-      <ul className="tree__stars" aria-label={`${starCount} de 24 estrellas conseguidas`}>
-        {MISSION_DAYS.map((day) => {
-          const earned = hasStar(progress, day)
+        <ul className="tree__stars" aria-label={`${starCount} de 24 estrellas conseguidas`}>
+          {STAR_POSITIONS.map(({ day, left, top }) => {
+            const earned = hasStar(progress, day)
 
-          return (
-            <li
-              key={day}
-              className={earned ? 'star star--earned' : 'star'}
-              aria-label={`Día ${day}: ${earned ? 'estrella conseguida' : 'sin estrella'}`}
-            >
-              <span aria-hidden="true">
+            return (
+              <li
+                key={day}
+                className={earned ? 'star star--earned' : 'star'}
+                style={{
+                  left: `${left}%`,
+                  top: `${top}%`,
+                  width: `${STAR_SIZE_PERCENT}%`,
+                }}
+              >
+                <span className="visually-hidden">
+                  Día {day}: {earned ? 'estrella conseguida' : 'sin estrella'}
+                </span>
                 <AssetGlyph
                   asset={getAsset(earned ? 'ui.star' : 'ui.star.off')}
                   label={false}
                   className="star__image"
                 />
-              </span>
-            </li>
-          )
-        })}
-      </ul>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
 
       {complete ? (
         <p className="tree__celebration" role="status">

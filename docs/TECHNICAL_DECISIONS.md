@@ -169,7 +169,7 @@ type View =
 ## Mission flow
 
 1. A door opens the generic mission panel.
-2. The panel shows the mission title, day, illustration, state and a short generic narrative.
+2. The panel shows the mission title, day, illustration, state and a short generic narrative. The final `ui.frame.general` artwork is the hero container: the frame holds the day, title, brief and main illustration, with Trasto slightly overlapping the lower edge. Games and reward actions stay below the frame, so the decorative artwork is never an empty placeholder.
 3. `resolveMissionAvailability` decides the stage:
 
    | Mission status | Surface | Stage |
@@ -184,7 +184,7 @@ type View =
 7. The optional location hint is shown only when configured.
 8. Gift confirmation stays available after mission completion even when the hint is missing, because an adult may give the clue verbally. The warning is informational; the app never fabricates a location.
 9. "I found the gift" awards the day's star. `confirmGiftFound` keeps the first timestamp, so repeated confirmations never duplicate the star. Replaying a completed mission shows a visible repetition state and a final notice; it keeps the existing star and timestamps untouched.
-10. The star tree shows 24 slots, the real count, a full-set celebration and, when applicable, the released days still pending.
+10. The star tree uses the final fir artwork as a `position: relative`, 2:3 container. `src/domain/starTreeLayout.ts` owns exactly 24 percentage positions, and every star (off or on) is rendered from the start as an absolutely positioned overlay. Only `hasStar`/`progress.days[day].giftFoundAt` switches the artwork; the counter, pending days and full-set celebration are unchanged. There is no separate horizontal star row.
 
 ### Implemented games
 
@@ -310,6 +310,7 @@ Hiding spots are rendered only by the adult panel. Future-day hints are never re
 `src/domain/assets.ts` remains the single source of truth for artwork keys and paths. The definitive WebP files live under `public/assets/final/` with their original subfolders; `recursos/` and the source ZIP stay git-ignored.
 
 - Shared UI, doors, frames, logos, characters, backgrounds, mission illustrations and game entries all use `kind: 'image'` with a `public/`-relative path.
+- The general mission frame is a full-strength hero background (`object-fit: fill` inside a 3:2 box, matching the 1536×1024 artwork), and the star tree overlays 24 percentage positions on the 1024×1536 final fir. Both keep the source aspect ratio, so no artwork is stretched.
 - Images are lazy by default through `AssetGlyph` (`loading="lazy"`, `decoding="async"`). Only the current mission scene or phase passes `priority` and requests eager loading; the full artwork folder is never fetched at first paint.
 - The day 6 and day 19 scenes are the final `taller_A`/`taller_B` and `escena_objetos` images; their hotspots are measured normalized rectangles. The day 16 jigsaw cuts the final portrait with CSS `background-position` and keeps the original 3:2 ratio.
 - Day 2 reuses existing final Rodolfo, snowman, gift, star, bell and tree art because the final folder has no dedicated memory-pair set.
@@ -364,6 +365,8 @@ Coverage includes:
 - The four day states and the "found gift stays visible" rule.
 - One star per day, first-timestamp preservation and immutable transitions.
 - Hint reveal persistence and star-tree completion.
+- Star-tree layout: exactly 24 unique percentage positions, one per mission day, all inside the artwork and without collisions.
+- UI structure: the mission frame wraps the title, brief, main illustration and Trasto; the tree scene is the relative 2:3 container for absolute stars; the final frame is a full hero background.
 - Child/demo storage round-trips, corrupt data fallback, save failure, demo-reset failure and store isolation.
 - PIN format, creation, verification, tamper rejection and storage round-trip.
 - Pure config patches for hints, hiding spots, manual unlock and PIN storage.

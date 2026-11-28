@@ -19,7 +19,7 @@ Interactive Advent calendar for December 2026. Trasto the elf hides one gift per
 |------|-----------|
 | Calendar | Mobile-first grid of 24 doors with locked, available, mission-complete and gift-found states |
 | Date rules | Local December 2026 unlock at local midnight; previous days stay accessible |
-| Progress | Star tree with one star per day, real pending progress and a full-set celebration |
+| Progress | Final fir artwork as the star tree container, with 24 scalable percentage star positions, one star per day, real pending progress and a full-set celebration |
 | Parental access | First-time PIN setup (4–8 digits), session unlock and lock; the PIN is a household barrier, not cryptographic security |
 | Adult panel | Edit main hint, location help and hiding spot per day; toggle manual unlock for difficult days; enable or disable the optional camera and recording locally |
 | Preview | Open any mission against the isolated demo store without touching child progress; a persistent label identifies it, the back button returns to the panel and the child-calendar exit locks the adult session |
@@ -49,7 +49,7 @@ Interactive Advent calendar for December 2026. Trasto the elf hides one gift per
 | Day 22 — secret elf language | Shared fixed alphabet of exactly 14 symbols including Y = mistletoe, built-in keyboard, decipher RENO, MAGIA and REGALO |
 | Day 23 — surprise for Trasto | Choose the final drawing, letter or craft art, see excited Trasto, confirm manually and see his farewell; no photos, video or camera |
 | Day 24 — final mission | Three crystals with stable off/on artwork: intelligence with reindeer = 4 and code 64, memory with 3/4/5 bell sequences and retries, and magic with LUZ Y MAGIA plus manual pronunciation; then the prepared/flying sleigh transition, the last hint and a progress/album celebration; no timer |
-| Mission integration | A solved game completes the mission; the existing main hint, optional location help and single gift/star flow continue unchanged. A completed mission can be replayed with a visible repetition notice and no progress write |
+| Mission integration | The final general frame is the mission hero: it holds the day, title, a brief explanation and the main illustration, with Trasto slightly overlapping the lower edge. A solved game completes the mission below the frame; the existing main hint, optional location help and single gift/star flow continue unchanged. A completed mission can be replayed with a visible repetition notice and no progress write |
 | Game assets | Final WebP artwork resolves through `src/domain/assets.ts` and `resolveAssetPath`, including shared UI, doors, stars, frames, logos, characters, mission illustrations and every final game scene. Images are lazy by default; current mission scenes/phases are eager. Papá Noel (intelligence crystal) and the snowy pine (maze) remain documented provisional emoji because no final asset exists |
 | Private album | Parental-only list grouped by mission day and date, multiple photos/videos per day, lazy image/video preview, individual download and confirmed deletion |
 | Album import | File-picker import from the gallery for one or many photos/videos, assigned to a chosen mission day; remains the fallback if the camera fails |

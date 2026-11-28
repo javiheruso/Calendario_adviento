@@ -166,6 +166,10 @@ export function MissionPanel({
 
   return (
     <section className="mission" aria-labelledby="mission-title">
+      <button type="button" className="link-button" onClick={onBack}>
+        <span aria-hidden="true">←</span> {backLabel}
+      </button>
+
       <figure className="mission__banner">
         <AssetGlyph
           asset={getAsset('ui.frame.general')}
@@ -173,41 +177,35 @@ export function MissionPanel({
           className="mission__banner-image"
           priority
         />
-      </figure>
-      <button type="button" className="link-button" onClick={onBack}>
-        <span aria-hidden="true">←</span> {backLabel}
-      </button>
 
-      <header className="mission__header">
-        <p className="mission__eyebrow">Día {day} de 24</p>
-        <div className="mission__title-row">
+        <div className="mission__banner-content">
           <span className="mission__icon" aria-hidden="true">
             <AssetGlyph asset={getAsset(mission.illustration)} label={false} />
           </span>
-          <div>
+          <div className="mission__intro">
+            <p className="mission__eyebrow">Día {day} de 24</p>
             <h2 id="mission-title" tabIndex={-1}>
               {mission.title}
             </h2>
-            <p className={`badge badge--${viewState}`}>{STATE_LABELS[viewState]}</p>
-            {repeating ? (
-              <p className="badge badge--repeat">Repetición · no cambia tu estrella</p>
-            ) : null}
+            <p className="mission__narrative">
+              Supera la misión y Trasto te dará la pista del regalo. Sin prisa.
+            </p>
           </div>
         </div>
-      </header>
 
-      <div className="mission__narrative-row">
         <AssetGlyph
           asset={getAsset('brand.trasto.explains')}
           label={false}
           className="mission__narrative-art"
           priority
         />
-        <p className="mission__narrative">
-          Trasto te ha preparado esta misión. Cuando la superes, te dará la pista para
-          encontrar el regalo escondido. Sin prisa y sin penalizaciones: puedes intentarlo
-          las veces que quieras.
-        </p>
+      </figure>
+
+      <div className="mission__meta">
+        <p className={`badge badge--${viewState}`}>{STATE_LABELS[viewState]}</p>
+        {repeating ? (
+          <p className="badge badge--repeat">Repetición · no cambia tu estrella</p>
+        ) : null}
       </div>
 
       {repeating ? (

@@ -17,7 +17,9 @@ The definitive WebP set extracted from `recursos/Trasto_recursos_web.zip` into `
 | Lazy by default | `AssetGlyph` renders `loading="lazy"` and `decoding="async"`. |
 | Eager only when needed | The header logo, the calendar/mission banners and a current mission scene pass `priority`, which sets `loading="eager"` and `fetchPriority="high"`. |
 | No whole-folder preload | The 120-file / 41 MB folder is never requested on first paint; shared icons and doors stream in as they render. |
-| Shell final art | The header logo, page backdrop, calendar banner, both door states, star tree, mission banner and album book render from final images at full strength; only small UI cue glyphs stay at glyph size. |
+| Shell final art | The header logo, page backdrop, calendar banner, both door states, star tree, mission hero frame and album book render from final images at full strength; only small UI cue glyphs stay at glyph size. |
+| Mission hero | `00_comunes/interfaz/marco_general.webp` is the mission hero container, not an empty banner: it holds the day, title, brief and main illustration, and Trasto overlaps its lower edge. It keeps the 3:2 source ratio. |
+| Star tree overlay | `00_comunes/interfaz/arbol_estrellas.webp` is a relative 2:3 container. `src/domain/starTreeLayout.ts` places 24 star images at percentage centres, so the layout scales on mobile and desktop; there is no separate horizontal row. |
 | Honest fallback | Only entries without a final asset stay emoji with `provisional: true`. |
 
 ## Verification performed
@@ -31,6 +33,7 @@ The definitive WebP set extracted from `recursos/Trasto_recursos_web.zip` into `
 | Hotspot alignment, day 6 | Cropped each measured rectangle from `taller_A` and `taller_B` with `ffmpeg`, reviewed side by side | The seven regions contain the intended change in both images. |
 | Hotspot alignment, day 19 | Cropped each measured rectangle from `escena_objetos` | The six regions contain the gift, bell, candy cane, Santa hat, blue bauble and star. |
 | Aspect ratios | CSS review + image metadata | Day 6 scene is 3:4, day 19 scene is 1672:941, day 16 board is 3:2, day 24 sleigh is 2:1, crystals are square; no stretched container. |
+| Star overlay alignment | Composited the 24 percentage positions over `arbol_estrellas.webp` with `ffmpeg` | All star centres sit on the tree foliage and above the wrapped gifts; no duplicate centres. |
 
 ## Key artwork dimensions
 
@@ -42,6 +45,9 @@ The definitive WebP set extracted from `recursos/Trasto_recursos_web.zip` into `
 | Day 21 phases | `21_muneco/fases/00_base…04_botones.webp` | 490×462 |
 | Day 24 crystals | `24_final/cristal_*_off/on.webp` | 1254×1254 |
 | Day 24 sleigh | `24_final/trineo_preparado/volando.webp` | 1774×887 |
+| Mission hero frame | `00_comunes/interfaz/marco_general.webp` | 1536×1024 |
+| Star tree | `00_comunes/interfaz/arbol_estrellas.webp` | 1024×1536 |
+| Star states | `00_comunes/interfaz/estrella_apagada.webp`, `estrella_encendida.webp` | 1254×1254 |
 | Characters | `00_comunes/personajes/*.webp` | 1024×1536, 1312×1199, 1199×1312 or 1024×1536 |
 | Bells and stand | `18_campanas/*.webp` | 1254×1254; stand 1448×1086 |
 
@@ -61,7 +67,7 @@ The day 2 memory pairs are not provisional: they reuse existing final Rodolfo, s
 
 ## Unused final files
 
-The background town/workshop images are now rendered: the child calendar uses the town pair and the mission surfaces use the workshop pair, each with a wide and a portrait variant. The ornate frames are rendered as full-strength banners instead of near-invisible background layers. These five remaining files are optional UI or physical-print material, not missing dependencies:
+The background town/workshop images are now rendered: the child calendar uses the town pair and the mission surfaces use the workshop pair, each with a wide and a portrait variant. The ornate frames are rendered at full strength: the calendar frame as a banner and the general frame as the mission hero container, not near-invisible background layers. These five remaining files are optional UI or physical-print material, not missing dependencies:
 
 - `00_comunes/interfaz/boton_rojo.webp`
 - `00_comunes/interfaz/boton_verde.webp`
