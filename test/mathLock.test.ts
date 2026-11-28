@@ -113,7 +113,8 @@ test('progressive help stops at two levels', () => {
 
   state = requestMathAid(state)
   assert.equal(state.aidLevel, 1)
-  assert.match(MATH_AID_MESSAGES[1] ?? '', /árbol 5/)
+  assert.match(MATH_AID_MESSAGES[1] ?? '', /tabla del cofre/)
+  assert.doesNotMatch(MATH_AID_MESSAGES[1] ?? '', /\d/, 'aid never injects values')
 
   state = requestMathAid(state)
   assert.equal(state.aidLevel, 2)

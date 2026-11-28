@@ -1,6 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
-  CIPHER_WORDS,
   advanceCipherRound,
   clearCipherInput,
   createCipherGame,
@@ -12,22 +11,31 @@ import {
   type SymbolCipherState,
 } from '../../domain/games/symbolCipher'
 import { CipherAlphabetReference, CipherSymbol } from './cipherSymbols'
+import { useAutoAdvance } from '../useAutoAdvance'
 import type { MissionGameProps } from './types'
 
 const KEYBOARD_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+const AUTO_ADVANCE_MS = 1500
 
 /**
- * Day 22: use the fixed fourteen-symbol alphabet to decipher RENO, MAGIA and
- * REGALO with the built-in keyboard. Wrong letters are only feedback and the
- * table stays visible as a parchment reference.
+ * Day 22: use the fixed fourteen-symbol alphabet to decipher LUNA, TRINEO and
+ * ESTRELLA. The intro never lists the answers. A wrong answer is only feedback,
+ * and a correct word auto-advances after a short pause; the manual button uses
+ * the same one-shot guard so the round can never advance twice.
  */
 export function SymbolCipherGame({ onComplete }: MissionGameProps) {
-  const [game] = useState(() => createCipherGame(CIPHER_WORDS))
+  const [game] = useState(() => createCipherGame())
   const [state, setState] = useState<SymbolCipherState>(() => createCipherState(game))
   const [feedback, setFeedback] = useState<string | null>(null)
+  const advancingRef = useRef(false)
   const round = currentCipherRound(game, state)
   const complete = state.complete
-  const locked = complete || state.lastResult === 'correct'
+  const correct = state.lastResult === 'correct'
+  const locked = complete || correct
+
+  useEffect(() => {
+    advancingRef.current = false
+  }, [state.roundIndex])
 
   function addLetter(letter: string) {
     setState((current) => typeCipherLetter(current, game, letter))
@@ -59,21 +67,34 @@ export function SymbolCipherGame({ onComplete }: MissionGameProps) {
     }
 
     if (outcome.result === 'correct') {
-      setFeedback('¡Palabra descifrada! Sigue con la siguiente.')
+      setFeedback('¡Palabra descifrada! Siguiente palabra en un momento…')
     }
   }
 
-  function nextWord() {
+  function advanceOnce() {
+    if (advancingRef.current) {
+      return
+    }
+
+    advancingRef.current = true
+
+    if (state.roundIndex + 1 >= game.rounds.length) {
+      onComplete()
+      return
+    }
+
     setState((current) => advanceCipherRound(game, current))
     setFeedback(null)
   }
+
+  useAutoAdvance(correct, AUTO_ADVANCE_MS, advanceOnce)
 
   return (
     <div className="game game--cipher">
       <p className="game__lead">
         Este es el alfabeto secreto de los duendes. Usa el teclado para escribir cada
-        palabra y comprobar la traducción. La tabla se queda a la vista y no hay tiempo ni
-        penalizaciones.
+        palabra secreta y comprobar la traducción. La tabla se queda a la vista y no hay
+        tiempo ni penalizaciones.
       </p>
 
       <CipherAlphabetReference titleId="cipher-alphabet-title" />
@@ -112,7 +133,7 @@ export function SymbolCipherGame({ onComplete }: MissionGameProps) {
                 type="button"
                 className="cipher-key"
                 onClick={() => addLetter(letter)}
-                disabled={locked || (round ? state.input.length >= round.word.length : true)}
+                disabled={locked || state.input.length >= round.word.length}
               >
                 {letter}
               </button>
@@ -146,12 +167,12 @@ export function SymbolCipherGame({ onComplete }: MissionGameProps) {
             </button>
           </div>
 
-          {state.lastResult === 'correct' ? (
+          {correct ? (
             <div className="game__complete" role="status">
               <p>
                 <strong>¡{round.word} está descifrada!</strong>
               </p>
-              <button type="button" className="button button--primary" onClick={nextWord}>
+              <button type="button" className="button button--primary" onClick={advanceOnce}>
                 {state.roundIndex + 1 >= game.rounds.length
                   ? 'Terminar'
                   : 'Siguiente palabra'}
@@ -170,7 +191,7 @@ export function SymbolCipherGame({ onComplete }: MissionGameProps) {
       {complete ? (
         <div className="game__complete" role="status">
           <p>
-            <strong>¡Has descifrado RENO, MAGIA y REGALO!</strong>
+            <strong>¡Has descifrado las tres palabras secretas!</strong>
           </p>
           <button type="button" className="button button--primary" onClick={onComplete}>
             Continuar

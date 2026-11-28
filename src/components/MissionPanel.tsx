@@ -1,7 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { AlbumSaveOutcome, SaveRecordingToAlbumInput } from '../domain/album'
 import { getAsset } from '../domain/assets'
 import { resolveMissionAvailability } from '../domain/missions'
+import {
+  REWARD_RETURN_DELAY_MS,
+  shouldReturnToCalendar,
+} from '../domain/reward'
 import type { HintKind } from '../domain/progress'
 import type {
   AppConfig,
@@ -42,7 +46,10 @@ interface MissionPanelProps {
   onBack: () => void
   onCompleteMission: () => void
   onRevealHint: (kind: HintKind) => void
-  onConfirmGift: () => void
+  /** Returns whether the star was persisted before the celebration starts. */
+  onConfirmGift: () => boolean
+  /** Child-only automatic return to the calendar after a saved star. */
+  onRewardReturn?: () => void
   onSaveRecording?: (
     input: SaveRecordingToAlbumInput,
   ) => Promise<AlbumSaveOutcome>
@@ -75,6 +82,7 @@ export function MissionPanel({
   onCompleteMission,
   onRevealHint,
   onConfirmGift,
+  onRewardReturn,
   onSaveRecording,
 }: MissionPanelProps) {
   const [repeatingDay, setRepeatingDay] = useState<MissionDay | null>(null)
@@ -82,6 +90,14 @@ export function MissionPanel({
     day: MissionDay
     text: string
   } | null>(null)
+  const [confirmingGift, setConfirmingGift] = useState(false)
+  const [rewardPending, setRewardPending] = useState(false)
+  const [rewardError, setRewardError] = useState<string | null>(null)
+  const rewardReturnRef = useRef(onRewardReturn)
+
+  useEffect(() => {
+    rewardReturnRef.current = onRewardReturn
+  }, [onRewardReturn])
   const dayProgress = progress.days[day]
   const missionCompleted = Boolean(dayProgress?.missionCompletedAt)
   const giftFound = Boolean(dayProgress?.giftFoundAt)
@@ -103,6 +119,41 @@ export function MissionPanel({
   // Keyed by local day state, so a day change cannot keep a stale repeat mode.
   const repeating = repeatingDay === day
   const repeatNotice = repeatFeedback?.day === day ? repeatFeedback.text : null
+
+  useEffect(() => {
+    // `rewardPending` is only set after a successful save, so the saved flag
+    // passed here is always true; the helper still keeps demo/preview isolated.
+    if (!rewardPending || !shouldReturnToCalendar(true, demoMode)) {
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      rewardReturnRef.current?.()
+    }, REWARD_RETURN_DELAY_MS)
+
+    return () => window.clearTimeout(timer)
+  }, [rewardPending, demoMode])
+
+  function handleConfirmGift() {
+    if (confirmingGift || rewardPending || giftFound) {
+      return
+    }
+
+    setConfirmingGift(true)
+    setRewardError(null)
+    const saved = onConfirmGift()
+
+    if (!saved) {
+      setConfirmingGift(false)
+      setRewardError(
+        'No se pudo guardar la estrella en este dispositivo. Revisa el almacenamiento y vuelve a intentarlo.',
+      )
+      return
+    }
+
+    setRewardPending(true)
+    setConfirmingGift(false)
+  }
 
   function renderMissionContent(onGameComplete: () => void) {
     if (availability === 'game') {
@@ -281,12 +332,22 @@ export function MissionPanel({
 
           <div className="gift-block">
             {giftFound ? (
-              <p className="celebration" role="status">
+              <div
+                className={`celebration${rewardPending ? ' celebration--pending' : ''}`}
+                role="status"
+              >
                 <span className="celebration__icon" aria-hidden="true">
                   <AssetGlyph asset={getAsset('ui.star')} label={false} />
                 </span>
-                ¡Regalo encontrado! La estrella del día {day} ya es tuya.
-              </p>
+                <span>
+                  ¡Regalo encontrado! La estrella del día {day} ya es tuya.
+                  {rewardPending
+                    ? demoMode
+                      ? ' Guardada solo en la vista de prueba: el progreso infantil no cambia.'
+                      : ' Estrella guardada. Volviendo al árbol…'
+                    : null}
+                </span>
+              </div>
             ) : (
               <>
                 <p className="gift-block__note">
@@ -295,12 +356,20 @@ export function MissionPanel({
                 <button
                   type="button"
                   className="button button--primary"
-                  onClick={onConfirmGift}
+                  onClick={handleConfirmGift}
+                  disabled={confirmingGift}
+                  aria-busy={confirmingGift}
                 >
                   Ya he encontrado el regalo
                 </button>
               </>
             )}
+
+            {rewardError ? (
+              <p className="notice notice--warning" role="alert">
+                {rewardError}
+              </p>
+            ) : null}
           </div>
 
           <div className="repeat-block">

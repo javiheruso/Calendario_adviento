@@ -27,16 +27,23 @@ import { getMission } from './domain/missions'
 import {
   completeMission,
   confirmGiftFound,
+  countStars,
   createEmptyProgress,
   revealHint,
   type HintKind,
 } from './domain/progress'
-import type {
-  AppConfig,
-  AppState,
-  CalendarAccess,
-  MissionDay,
-  ProgressState,
+import {
+  persistBeforePublish,
+  STAR_EARNED_EVENT,
+  starEarnedDetail,
+} from './domain/reward'
+import {
+  TOTAL_MISSIONS,
+  type AppConfig,
+  type AppState,
+  type CalendarAccess,
+  type MissionDay,
+  type ProgressState,
 } from './domain/types'
 import { createPinRecord, isValidPinFormat, verifyPin } from './security/pin'
 import { createIndexedDbAlbumDatabase } from './storage/albumDb'
@@ -104,6 +111,7 @@ export default function App() {
   const [demoMode, setDemoMode] = useState(false)
   const [demoProgress, setDemoProgress] = useState<ProgressState>(loadDemoProgress)
   const [view, setView] = useState<View>({ kind: 'calendar' })
+  const [celebratedDay, setCelebratedDay] = useState<MissionDay | null>(null)
   const [persistenceError, setPersistenceError] = useState(false)
   const [demoPersistenceError, setDemoPersistenceError] = useState(false)
   const [adultError, setAdultError] = useState<string | null>(null)
@@ -120,6 +128,15 @@ export default function App() {
   useEffect(() => {
     audioManager.setPreferences(audioPreferences)
   }, [audioPreferences])
+
+  useEffect(() => {
+    if (celebratedDay === null) {
+      return
+    }
+
+    const timer = window.setTimeout(() => setCelebratedDay(null), 3500)
+    return () => window.clearTimeout(timer)
+  }, [celebratedDay])
 
   useEffect(() => {
     return () => {
@@ -163,6 +180,20 @@ export default function App() {
 
       if (target) {
         target.focus()
+
+        if (
+          target.hasAttribute('data-star-day') &&
+          typeof target.scrollIntoView === 'function'
+        ) {
+          const reduceMotion =
+            typeof window.matchMedia === 'function' &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          target.scrollIntoView({
+            block: 'center',
+            behavior: reduceMotion ? 'auto' : 'smooth',
+          })
+        }
+
         return
       }
     }
@@ -185,12 +216,20 @@ export default function App() {
     return saved
   }
 
-  function commitChildProgress(next: ProgressState) {
+  function commitChildProgress(next: ProgressState): boolean {
     if (next === state.progress) {
-      return
+      return true
     }
 
-    persistChildState({ ...state, progress: next })
+    // Persist first: a failed write must not publish a star or hint that the
+    // device could not store.
+    const saved = persistBeforePublish(
+      { ...state, progress: next },
+      saveAppState,
+      setState,
+    )
+    setPersistenceError(!saved)
+    return saved
   }
 
   function commitConfig(next: AppConfig) {
@@ -201,21 +240,22 @@ export default function App() {
     persistChildState({ ...state, config: next })
   }
 
-  function commitDemoProgress(next: ProgressState) {
+  function commitDemoProgress(next: ProgressState): boolean {
     if (next === demoProgress) {
-      return
+      return true
     }
 
-    setDemoProgress(next)
-    setDemoPersistenceError(!saveDemoProgress(next))
+    const saved = persistBeforePublish(next, saveDemoProgress, setDemoProgress)
+    setDemoPersistenceError(!saved)
+    return saved
   }
 
-  function updateProgress(next: ProgressState) {
+  function updateProgress(next: ProgressState): boolean {
     if (usingDemoProgress) {
-      commitDemoProgress(next)
-    } else {
-      commitChildProgress(next)
+      return commitDemoProgress(next)
     }
+
+    return commitChildProgress(next)
   }
 
   function commitAudioPreferences(next: AudioPreferences) {
@@ -404,6 +444,55 @@ export default function App() {
 
   function handlePreviewDay(day: MissionDay) {
     setView({ kind: 'preview', day })
+  }
+
+  /**
+   * Persists the star before the celebration. A failed write keeps the child on
+   * the reward screen instead of navigating as if the star were saved; demo and
+   * preview writes never leave the adult surface.
+   */
+  function handleConfirmGift(): boolean {
+    if (view.kind !== 'mission' && view.kind !== 'preview') {
+      return false
+    }
+
+    const day = view.day
+    const next = confirmGiftFound(activeProgress, day)
+
+    // Idempotent retry: a day already holding its star changes nothing and
+    // must not trigger a second celebration.
+    if (next === activeProgress) {
+      return true
+    }
+
+    const saved = updateProgress(next)
+
+    if (!saved) {
+      return false
+    }
+
+    if (!usingDemoProgress) {
+      const detail = starEarnedDetail(day, countStars(next), TOTAL_MISSIONS)
+      setCelebratedDay(day)
+      window.dispatchEvent(new CustomEvent(STAR_EARNED_EVENT, { detail }))
+    }
+
+    return true
+  }
+
+  /** Automatic child return: focus and scroll to the star that was just won. */
+  function handleRewardReturn() {
+    if (view.kind !== 'mission') {
+      return
+    }
+
+    const day = view.day
+    setCelebratedDay(day)
+    pendingFocusRef.current = {
+      viewKey: 'calendar',
+      selector: `[data-star-day="${day}"]`,
+    }
+    setView({ kind: 'calendar' })
   }
 
   async function handleSaveRecording(
@@ -614,16 +703,29 @@ export default function App() {
               }
               onBack={handleMissionBack}
               onCompleteMission={() => {
-                audioManager.playEffect('effect.success')
-                updateProgress(completeMission(activeProgress, view.day))
+                const next = completeMission(activeProgress, view.day)
+
+                if (next === activeProgress) {
+                  return
+                }
+
+                if (updateProgress(next)) {
+                  audioManager.playEffect('effect.success')
+                }
               }}
-              onRevealHint={(kind: HintKind) =>
+              onRevealHint={(kind: HintKind) => {
                 updateProgress(revealHint(activeProgress, view.day, kind))
-              }
-              onConfirmGift={() => {
-                audioManager.playEffect('effect.celebration')
-                updateProgress(confirmGiftFound(activeProgress, view.day))
               }}
+              onConfirmGift={() => {
+                const saved = handleConfirmGift()
+
+                if (saved) {
+                  audioManager.playEffect('effect.celebration')
+                }
+
+                return saved
+              }}
+              onRewardReturn={handleRewardReturn}
               onSaveRecording={handleSaveRecording}
             />
           </MissionAudioScope>
@@ -636,7 +738,11 @@ export default function App() {
               now={now}
               onOpenDay={handleOpenDay}
             />
-            <StarTree progress={activeProgress} pendingReleasedDays={pendingReleasedDays} />
+            <StarTree
+              progress={activeProgress}
+              pendingReleasedDays={pendingReleasedDays}
+              celebratedDay={celebratedDay}
+            />
           </>
         )}
       </main>

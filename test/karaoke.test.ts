@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import { strict as assert } from 'node:assert'
 import {
+  KARAOKE_CONTENT_CONFIG,
   KARAOKE_COUNTDOWN_SECONDS,
   KARAOKE_LINES,
   KARAOKE_LINE_SECONDS,
@@ -33,6 +34,17 @@ function atSong(seconds: number) {
   const started = startKaraoke(createKaraokeState())
   return advanceKaraoke(started, KARAOKE_COUNTDOWN_SECONDS + seconds)
 }
+
+test('the authorized-content seam is explicit and ships no track or final lyric', () => {
+  assert.equal(KARAOKE_CONTENT_CONFIG.authorized, false)
+  assert.equal(KARAOKE_CONTENT_CONFIG.lyricSource, 'provisional')
+  assert.equal(KARAOKE_CONTENT_CONFIG.instrumentalPath, null)
+  assert.equal(KARAOKE_CONTENT_CONFIG.guideVocalPath, null)
+  assert.equal(KARAOKE_CONTENT_CONFIG.countdownSeconds, KARAOKE_COUNTDOWN_SECONDS)
+  assert.equal(KARAOKE_CONTENT_CONFIG.songSeconds, KARAOKE_SONG_SECONDS)
+  assert.equal(KARAOKE_CONTENT_CONFIG.styleSeconds, KARAOKE_STYLE_SECONDS)
+  assert.equal(KARAOKE_CONTENT_CONFIG.lineSeconds, KARAOKE_LINE_SECONDS)
+})
 
 test('the provisional song lasts between 60 and 90 seconds and keeps six styles', () => {
   assert.ok(KARAOKE_SONG_SECONDS >= 60 && KARAOKE_SONG_SECONDS <= 90)

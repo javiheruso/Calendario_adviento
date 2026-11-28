@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { getAsset, type AssetId } from '../../domain/assets'
 import {
   REINDEER_CARROT_COUNT,
+  REINDEER_HOLD_STEP_MS,
   REINDEER_MAZE,
   REINDEER_WALK_FRAME_MS,
   REINDEER_WALK_STOP_MS,
@@ -41,23 +42,31 @@ function cellKey(cell: MazeCell): string {
 }
 
 /**
- * Day 4: guide Rodolfo through a snowy forest, collect three carrots and reach
- * the stable. Movement is available by tapping a neighbouring cell or with four
- * large direction buttons; there is no timer or penalty.
+ * Day 4: guide Rodolfo through a snowy 9×11 forest, collect three carrots and
+ * reach the stable. Movement accepts a neighbouring cell, the four large
+ * direction buttons, or a held direction (mouse, touch or keyboard) that
+ * repeats one valid step at a time. The final Rodolfo art slides between cells
+ * and alternates two walk frames every 175 ms only while moving.
  *
- * The final Rodolfo artwork is animated only while he actually moves: two walk
- * frames alternate every 175 ms, and he faces left when the last horizontal
- * step went left. Blocked steps are ignored before the animation starts, so an
- * invalid move never changes the rules or the pose.
+ * Invalid cells, pines and borders are ignored before the animation starts, so
+ * a held direction can never cross a wall, skip a cell or duplicate a carrot.
  */
 export function ReindeerMazeGame({ onComplete }: MissionGameProps) {
   const [state, setState] = useState(() => createReindeerMazeState())
+  const stateRef = useRef(state)
+
+  useEffect(() => {
+    stateRef.current = state
+  }, [state])
   // The final Rodolfo artwork faces left. The horizontal mirror is applied on
   // rightward steps so he always looks in the direction of travel; moving left
   // keeps the source orientation.
   const [facing, setFacing] = useState<'left' | 'right'>('left')
   const [walkId, setWalkId] = useState(0)
   const [walkFrame, setWalkFrame] = useState(0)
+  const [holdDirection, setHoldDirection] = useState<MazeDirection | null>(null)
+  const [feedback, setFeedback] = useState<string | null>(null)
+  const previousCollectedRef = useRef(0)
   const complete = isReindeerMazeComplete(state)
   const atStable = isAtStable(state)
   const remaining = carrotsRemaining(state)
@@ -80,13 +89,65 @@ export function ReindeerMazeGame({ onComplete }: MissionGameProps) {
     }
   }, [walkId])
 
-  function move(direction: MazeDirection) {
-    const next = moveReindeer(state, direction)
+  useEffect(() => {
+    const previous = previousCollectedRef.current
+    const current = state.collected.length
+    previousCollectedRef.current = current
 
-    if (next === state) {
+    if (current > previous) {
+      setFeedback(`¡Zanahoria recogida! ${current} de ${REINDEER_CARROT_COUNT}.`)
+    }
+  }, [state.collected.length])
+
+  useEffect(() => {
+    if (!feedback) {
       return
     }
 
+    const timer = window.setTimeout(() => setFeedback(null), 1600)
+    return () => window.clearTimeout(timer)
+  }, [feedback])
+
+  useEffect(() => {
+    if (!holdDirection || complete) {
+      return
+    }
+
+    const interval = window.setInterval(() => {
+      move(holdDirection)
+    }, REINDEER_HOLD_STEP_MS)
+
+    return () => window.clearInterval(interval)
+    // `move` reads the latest state through a ref, so the interval survives a
+    // cell change without restarting or reading a stale position.
+  }, [holdDirection, complete])
+
+  useEffect(() => {
+    if (!holdDirection) {
+      return
+    }
+
+    const stop = () => setHoldDirection(null)
+    window.addEventListener('pointerup', stop)
+    window.addEventListener('pointercancel', stop)
+    window.addEventListener('blur', stop)
+
+    return () => {
+      window.removeEventListener('pointerup', stop)
+      window.removeEventListener('pointercancel', stop)
+      window.removeEventListener('blur', stop)
+    }
+  }, [holdDirection])
+
+  function move(direction: MazeDirection) {
+    const current = stateRef.current
+    const next = moveReindeer(current, direction)
+
+    if (next === current) {
+      return
+    }
+
+    stateRef.current = next
     setState(next)
 
     if (direction === 'left') {
@@ -100,11 +161,17 @@ export function ReindeerMazeGame({ onComplete }: MissionGameProps) {
   }
 
   function tapCell(cell: MazeCell) {
-    const direction = directionTo(state.position, cell)
+    const direction = directionTo(stateRef.current.position, cell)
 
     if (direction) {
       move(direction)
     }
+  }
+
+  function handlePointerDown(direction: MazeDirection, event: PointerEvent) {
+    event.preventDefault()
+    move(direction)
+    setHoldDirection(direction)
   }
 
   const reindeerAsset: AssetId = walking
@@ -112,84 +179,114 @@ export function ReindeerMazeGame({ onComplete }: MissionGameProps) {
       ? 'game.reindeer.walk.a'
       : 'game.reindeer.walk.b'
     : 'game.maze.reindeer'
+  const reindeerPosition = state.position
+  const reindeerLeft = ((reindeerPosition.col + 0.5) / maze.cols) * 100
+  const reindeerTop = ((reindeerPosition.row + 0.5) / maze.rows) * 100
 
   return (
     <div className="game game--maze">
       <p className="game__lead">
         Lleva a Rodolfo por el bosque nevado, recoge las tres zanahorias y llévalo al
-        establo. Toca una casilla vecina o usa las flechas grandes. No hay tiempo ni
-        penalizaciones.
+        establo. Toca una casilla vecina, usa las flechas grandes o mantén pulsada una
+        flecha para caminar. No hay tiempo ni penalizaciones.
       </p>
 
       <p className="game__status" role="status">
         Zanahorias: {state.collected.length} de {REINDEER_CARROT_COUNT}
       </p>
 
-      <div
-        className="maze-grid"
-        style={{ gridTemplateColumns: `repeat(${maze.cols}, minmax(0, 1fr))` }}
-        aria-label="Bosque nevado"
-      >
-        {Array.from({ length: maze.rows }, (_, row) =>
-          Array.from({ length: maze.cols }, (_, col) => {
-            const cell = { row, col }
-            const wall = isMazeWall(maze, cell)
-            const stable = sameMazeCell(cell, maze.stable)
-            const carrot = maze.carrots.find((candidate) =>
-              sameMazeCell(candidate, cell),
-            )
-            const collected = carrot ? state.collected.includes(carrot.id) : false
-            const reindeer = sameMazeCell(cell, state.position)
-            const label = wall
-              ? 'Árbol nevado, no se puede pasar'
-              : stable
-                ? 'Establo'
-                : carrot
-                  ? collected
-                    ? 'Zanahoria ya recogida'
-                    : 'Zanahoria'
-                  : 'Nieve'
+      <div className="maze-board">
+        <div
+          className="maze-grid"
+          style={{ gridTemplateColumns: `repeat(${maze.cols}, minmax(0, 1fr))` }}
+          role="group"
+          aria-label="Bosque nevado"
+        >
+          {Array.from({ length: maze.rows }, (_, row) =>
+            Array.from({ length: maze.cols }, (_, col) => {
+              const cell = { row, col }
+              const wall = isMazeWall(maze, cell)
+              const stable = sameMazeCell(cell, maze.stable)
+              const carrot = maze.carrots.find((candidate) =>
+                sameMazeCell(candidate, cell),
+              )
+              const collected = carrot ? state.collected.includes(carrot.id) : false
+              const label = wall
+                ? 'Árbol nevado, no se puede pasar'
+                : stable
+                  ? 'Establo'
+                  : carrot
+                    ? collected
+                      ? 'Zanahoria ya recogida'
+                      : 'Zanahoria'
+                    : 'Nieve'
 
-            return (
-              <button
-                key={cellKey(cell)}
-                type="button"
-                className={`maze-cell${wall ? ' maze-cell--wall' : ''}${
-                  stable ? ' maze-cell--stable' : ''
-                }${reindeer ? ' maze-cell--reindeer' : ''}`}
-                onClick={() => tapCell(cell)}
-                disabled={wall || complete}
-                aria-label={`${label}${reindeer ? ', con Rodolfo' : ''}`}
-              >
-                {reindeer ? (
-                  <span
-                    className={`maze-cell__glyph maze-cell__glyph--reindeer${
-                      facing === 'right' ? ' maze-cell__glyph--flip' : ''
-                    }`}
-                    aria-hidden="true"
-                  >
-                    <AssetGlyph asset={getAsset(reindeerAsset)} label={false} priority />
-                  </span>
-                ) : wall ? (
-                  <span className="maze-cell__glyph" aria-hidden="true">
-                    <AssetGlyph asset={getAsset('game.maze.tree')} label={false} />
-                  </span>
-                ) : carrot && !collected ? (
-                  <span className="maze-cell__glyph" aria-hidden="true">
-                    <AssetGlyph asset={getAsset('game.maze.carrot')} label={false} />
-                  </span>
-                ) : stable ? (
-                  <span className="maze-cell__glyph" aria-hidden="true">
-                    <AssetGlyph asset={getAsset('game.maze.stable')} label={false} />
-                  </span>
-                ) : (
-                  <span className="maze-cell__snow" aria-hidden="true" />
-                )}
-              </button>
-            )
-          }),
-        )}
+              return (
+                <button
+                  key={cellKey(cell)}
+                  type="button"
+                  className={`maze-cell${wall ? ' maze-cell--wall' : ''}${
+                    stable ? ' maze-cell--stable' : ''
+                  }`}
+                  onClick={() => tapCell(cell)}
+                  disabled={wall || complete}
+                  aria-label={label}
+                >
+                  {wall ? (
+                    <span className="maze-cell__glyph" aria-hidden="true">
+                      <AssetGlyph asset={getAsset('game.maze.tree')} label={false} />
+                    </span>
+                  ) : carrot && !collected ? (
+                    <span className="maze-cell__glyph" aria-hidden="true">
+                      <AssetGlyph asset={getAsset('game.maze.carrot')} label={false} />
+                    </span>
+                  ) : stable ? (
+                    <span className="maze-cell__glyph" aria-hidden="true">
+                      <AssetGlyph asset={getAsset('game.maze.stable')} label={false} />
+                    </span>
+                  ) : (
+                    <span className="maze-cell__snow" aria-hidden="true" />
+                  )}
+                </button>
+              )
+            }),
+          )}
+        </div>
+
+        <div
+          className={`maze-reindeer${facing === 'right' ? ' maze-reindeer--flip' : ''}${
+            walking ? ' maze-reindeer--walking' : ''
+          }`}
+          style={{
+            left: `${reindeerLeft}%`,
+            top: `${reindeerTop}%`,
+            width: `${100 / maze.cols}%`,
+          }}
+          aria-hidden="true"
+        >
+          <AssetGlyph
+            asset={getAsset(reindeerAsset)}
+            label={false}
+            className="maze-reindeer__image"
+            priority
+          />
+        </div>
+
+        <div className="maze-snow" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+          <span />
+        </div>
       </div>
+
+      {feedback ? (
+        <p className="game__hint game__hint--collect" role="status">
+          {feedback}
+        </p>
+      ) : null}
 
       {atStable && !complete ? (
         <p className="game__hint" role="status">
@@ -204,7 +301,18 @@ export function ReindeerMazeGame({ onComplete }: MissionGameProps) {
             key={item.direction}
             type="button"
             className={`maze-direction maze-direction--${item.direction}`}
-            onClick={() => move(item.direction)}
+            onPointerDown={(event) => handlePointerDown(item.direction, event)}
+            onClick={(event) => {
+              // Pointer presses already moved on pointerdown; only a keyboard
+              // activation (detail 0) needs the click path.
+              if (event.detail === 0) {
+                move(item.direction)
+              }
+            }}
+            onPointerUp={() => setHoldDirection(null)}
+            onPointerLeave={() => setHoldDirection(null)}
+            onPointerCancel={() => setHoldDirection(null)}
+            onContextMenu={(event) => event.preventDefault()}
             disabled={complete}
             aria-label={`Mover a Rodolfo hacia ${item.label.toLowerCase()}`}
           >

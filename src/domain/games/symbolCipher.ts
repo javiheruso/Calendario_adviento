@@ -8,8 +8,9 @@
  * tree=A, bell=E, gift=I, snowman=O, reindeer=U, star=M, mitten=G, sleigh=L,
  * snowflake=N, candy=S, candle=T, sock=R, sparkle=Z and mistletoe=Y.
  *
- * The child deciphers RENO, MAGIA and REGALO with the built-in keyboard. A
- * wrong answer is only feedback: no timer, penalty or attempt limit.
+ * The child deciphers LUNA, TRINEO and ESTRELLA with the built-in keyboard. The
+ * intro and help never list the answers. A wrong answer is only feedback: no
+ * timer, penalty or attempt limit.
  */
 
 export type CipherSymbolId =
@@ -73,7 +74,7 @@ export const CIPHER_ALPHABET: readonly CipherSymbol[] = [
 ]
 
 export const CIPHER_SYMBOL_COUNT = CIPHER_ALPHABET.length
-export const CIPHER_WORDS = ['RENO', 'MAGIA', 'REGALO'] as const
+export const CIPHER_WORDS = ['LUNA', 'TRINEO', 'ESTRELLA'] as const
 
 const LETTER_BY_SYMBOL = new Map<CipherSymbolId, string>(
   CIPHER_ALPHABET.map((symbol) => [symbol.id, symbol.letter]),

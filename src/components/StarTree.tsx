@@ -1,6 +1,6 @@
 import { getAsset } from '../domain/assets'
 import { countStars, hasStar, isAlbumComplete } from '../domain/progress'
-import { STAR_POSITIONS, STAR_SIZE_PERCENT } from '../domain/starTreeLayout'
+import { STAR_POSITIONS } from '../domain/starTreeLayout'
 import type { MissionDay, ProgressState } from '../domain/types'
 import { AssetGlyph } from './AssetGlyph'
 
@@ -8,9 +8,15 @@ interface StarTreeProps {
   progress: ProgressState
   /** Released days still without a star; empty while previewing a demo. */
   pendingReleasedDays: readonly MissionDay[]
+  /** Day that just earned its star and should play the reward animation. */
+  celebratedDay?: MissionDay | null
 }
 
-export function StarTree({ progress, pendingReleasedDays }: StarTreeProps) {
+export function StarTree({
+  progress,
+  pendingReleasedDays,
+  celebratedDay = null,
+}: StarTreeProps) {
   const starCount = countStars(progress)
   const complete = isAlbumComplete(progress)
 
@@ -23,7 +29,12 @@ export function StarTree({ progress, pendingReleasedDays }: StarTreeProps) {
           </span>
           Tu árbol de estrellas
         </h2>
-        <p className="tree__count">{starCount} / 24</p>
+        <p
+          className={`tree__count${celebratedDay ? ' tree__count--bump' : ''}`}
+          aria-live="polite"
+        >
+          {starCount} / 24
+        </p>
       </div>
 
       <div className="tree__scene">
@@ -34,27 +45,39 @@ export function StarTree({ progress, pendingReleasedDays }: StarTreeProps) {
         />
 
         <ul className="tree__stars" aria-label={`${starCount} de 24 estrellas conseguidas`}>
-          {STAR_POSITIONS.map(({ day, left, top }) => {
+          {STAR_POSITIONS.map(({ day, left, top, size }) => {
             const earned = hasStar(progress, day)
+            const celebrating = celebratedDay === day
 
             return (
               <li
                 key={day}
-                className={earned ? 'star star--earned' : 'star'}
+                className={`star${earned ? ' star--earned' : ''}${
+                  celebrating ? ' star--celebrating' : ''
+                }`}
+                data-star-day={day}
+                tabIndex={-1}
+                aria-label={`Día ${day}: ${
+                  earned ? 'estrella conseguida' : 'sin estrella'
+                }`}
                 style={{
                   left: `${left}%`,
                   top: `${top}%`,
-                  width: `${STAR_SIZE_PERCENT}%`,
+                  width: `${size}%`,
                 }}
               >
-                <span className="visually-hidden">
-                  Día {day}: {earned ? 'estrella conseguida' : 'sin estrella'}
+                <span className="star__art" aria-hidden="true">
+                  <AssetGlyph
+                    asset={getAsset('ui.star.off')}
+                    label={false}
+                    className="star__image star__image--off"
+                  />
+                  <AssetGlyph
+                    asset={getAsset('ui.star')}
+                    label={false}
+                    className="star__image star__image--on"
+                  />
                 </span>
-                <AssetGlyph
-                  asset={getAsset(earned ? 'ui.star' : 'ui.star.off')}
-                  label={false}
-                  className="star__image"
-                />
               </li>
             )
           })}

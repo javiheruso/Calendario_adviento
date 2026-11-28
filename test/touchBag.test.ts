@@ -2,7 +2,6 @@ import { test } from 'node:test'
 import { strict as assert } from 'node:assert'
 import {
   TOUCH_BAG_HITS,
-  TOUCH_BAG_SAFE_IDEAS,
   TOUCH_BAG_SLOT_IDS,
   createTouchBagState,
   isTouchBagComplete,
@@ -15,9 +14,14 @@ test('the mystery bag needs three manual hits and starts empty', () => {
 
   assert.equal(TOUCH_BAG_HITS, 3)
   assert.equal(TOUCH_BAG_SLOT_IDS.length, 3)
-  assert.equal(TOUCH_BAG_SAFE_IDEAS.length, 3)
   assert.equal(markedTouchBagHits(state), 0)
   assert.equal(isTouchBagComplete(state), false)
+})
+
+test('the child-facing domain exposes no example-object list', () => {
+  const module = require('../src/domain/games/touchBag') as Record<string, unknown>
+
+  assert.equal('TOUCH_BAG_SAFE_IDEAS' in module, false)
 })
 
 test('each hit is marked independently and can be undone', () => {

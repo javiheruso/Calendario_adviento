@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { getAsset, type AssetId } from '../../../domain/assets'
 import {
   beginSimonInput,
   createSimonProgress,
@@ -7,18 +6,15 @@ import {
   isSimonComplete,
   pressSimonBell,
   replaySimonRound,
+  simonPressFeedback,
   type SimonProgress,
 } from '../../../domain/games/bellSimon'
 import { createFinalBellGame } from '../../../domain/games/finalMemory'
-import { AssetGlyph } from '../../AssetGlyph'
+import { useAutoAdvance } from '../../useAutoAdvance'
+import { BellStand, type BellDefinition, type BellFeedback } from '../BellStand'
 import type { CrystalProps } from './types'
 
-const BELLS: readonly {
-  note: number
-  label: string
-  tone: string
-  asset: AssetId
-}[] = [
+const BELLS: readonly BellDefinition[] = [
   { note: 0, label: 'Do', tone: 'red', asset: 'game.simon.bell.red' },
   { note: 1, label: 'Re', tone: 'blue', asset: 'game.simon.bell.blue' },
   { note: 2, label: 'Mi', tone: 'green', asset: 'game.simon.bell.green' },
@@ -28,16 +24,20 @@ const BELLS: readonly {
 const NOTE_ON_MS = 380
 const NOTE_GAP_MS = 220
 const LEAD_IN_MS = 500
+const FEEDBACK_MS = 420
+const AUTO_ADVANCE_MS = 1500
 
 /**
  * Day 24 memory crystal: three independent bell sequences of 3, 4 and 5 notes.
- * The day 18 Simon rules are reused, so a miss only pauses the current sequence
- * and replaying is always available. The game is silent until real audio exists.
+ * The day 18 Simon rules and bell composition are reused, so a miss only pauses
+ * the current sequence and replaying is always available. The game stays silent
+ * until real audio exists; the stand, illumination and sway are visual only.
  */
 export function MemoryCrystal({ onSolved }: CrystalProps) {
   const [game] = useState(() => createFinalBellGame())
   const [progress, setProgress] = useState<SimonProgress>(() => createSimonProgress(game))
   const [activeBell, setActiveBell] = useState<number | null>(null)
+  const [feedback, setFeedback] = useState<BellFeedback | null>(null)
 
   const sequence = currentSimonSequence(game, progress)
   const complete = isSimonComplete(progress)
@@ -71,6 +71,17 @@ export function MemoryCrystal({ onSolved }: CrystalProps) {
     }
   }, [progress.phase, progress.round, sequence])
 
+  useEffect(() => {
+    if (!feedback) {
+      return
+    }
+
+    const timer = window.setTimeout(() => setFeedback(null), FEEDBACK_MS)
+    return () => window.clearTimeout(timer)
+  }, [feedback])
+
+  useAutoAdvance(complete, AUTO_ADVANCE_MS, onSolved)
+
   function pressBell(note: number) {
     if (progress.phase !== 'input') {
       return
@@ -78,6 +89,12 @@ export function MemoryCrystal({ onSolved }: CrystalProps) {
 
     const outcome = pressSimonBell(game, progress, note)
     setProgress(outcome.progress)
+
+    const kind = simonPressFeedback(outcome.result)
+
+    if (kind) {
+      setFeedback({ note, kind })
+    }
 
     if (outcome.result === 'failed') {
       setActiveBell(null)
@@ -98,25 +115,14 @@ export function MemoryCrystal({ onSolved }: CrystalProps) {
         notas
       </p>
 
-      <div className="simon-bells" aria-label="Campanas del cristal de la memoria">
-        {BELLS.map((bell) => (
-          <button
-            key={bell.note}
-            type="button"
-            className={`simon-bell simon-bell--${bell.tone}${
-              activeBell === bell.note ? ' simon-bell--active' : ''
-            }`}
-            onClick={() => pressBell(bell.note)}
-            disabled={progress.phase !== 'input' || complete}
-            aria-label={`Campana ${bell.label}`}
-          >
-            <span className="simon-bell__glyph" aria-hidden="true">
-              <AssetGlyph asset={getAsset(bell.asset)} label={false} />
-            </span>
-            <span className="simon-bell__label">{bell.label}</span>
-          </button>
-        ))}
-      </div>
+      <BellStand
+        bells={BELLS}
+        activeBell={activeBell}
+        feedback={feedback}
+        disabled={progress.phase !== 'input' || complete}
+        label="Campanas del cristal de la memoria"
+        onPress={pressBell}
+      />
 
       {progress.phase === 'failed' ? (
         <div className="notice" role="status">

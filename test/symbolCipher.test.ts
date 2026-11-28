@@ -83,27 +83,35 @@ test('the table resolves both directions and the three approved words', () => {
   assert.equal(cipherSymbolForLetter('Q'), null)
 
   assert.deepEqual(symbolsForWord('Y'), ['mistletoe'])
-  assert.deepEqual(symbolsForWord('RENO'), ['sock', 'bell', 'snowflake', 'snowman'])
-  assert.deepEqual(symbolsForWord('MAGIA'), [
-    'star',
-    'tree',
-    'mitten',
-    'gift',
+  assert.deepEqual(symbolsForWord('LUNA'), [
+    'sleigh',
+    'reindeer',
+    'snowflake',
     'tree',
   ])
-  assert.deepEqual(symbolsForWord('REGALO'), [
+  assert.deepEqual(symbolsForWord('TRINEO'), [
+    'candle',
+    'sock',
+    'gift',
+    'snowflake',
+    'bell',
+    'snowman',
+  ])
+  assert.deepEqual(symbolsForWord('ESTRELLA'), [
+    'bell',
+    'candy',
+    'candle',
     'sock',
     'bell',
-    'mitten',
-    'tree',
     'sleigh',
-    'snowman',
+    'sleigh',
+    'tree',
   ])
 
   const game = createCipherGame(CIPHER_WORDS)
   assert.deepEqual(
     game.rounds.map((round) => round.word),
-    ['RENO', 'MAGIA', 'REGALO'],
+    ['LUNA', 'TRINEO', 'ESTRELLA'],
   )
 })
 
@@ -111,40 +119,39 @@ test('the built-in keyboard accepts letters up to the word length only', () => {
   const game = createCipherGame(CIPHER_WORDS)
   let state = createCipherState(game)
 
-  assert.equal(currentCipherRound(game, state)?.word, 'RENO')
+  assert.equal(currentCipherRound(game, state)?.word, 'LUNA')
 
-  state = typeWord(state, game, 'reno')
-  assert.equal(state.input, 'RENO')
+  state = typeWord(state, game, 'luna')
+  assert.equal(state.input, 'LUNA')
 
   state = typeCipherLetter(state, game, 'X')
-  assert.equal(state.input, 'RENO', 'no extra letters are accepted')
+  assert.equal(state.input, 'LUNA', 'no extra letters are accepted')
 
   state = deleteCipherLetter(state)
-  assert.equal(state.input, 'REN')
+  assert.equal(state.input, 'LUN')
   state = clearCipherInput(state)
   assert.equal(state.input, '')
 })
 
 test('incomplete and wrong answers keep the input editable', () => {
   const game = createCipherGame(CIPHER_WORDS)
-  let state = createCipherState(game)
-
-  state = typeWord(state, game, 'REN')
+  const state = typeWord(createCipherState(game), game, 'LUN')
   const incomplete = submitCipherWord(game, state)
   assert.equal(incomplete.result, 'incomplete')
   assert.equal(incomplete.state, state)
 
-  state = typeCipherLetter(state, game, 'A')
-  const wrong = submitCipherWord(game, state)
-  assert.equal(wrong.result, 'wrong')
-  assert.equal(wrong.state.lastResult, 'wrong')
-  assert.equal(wrong.state.input, 'RENA')
+  const wrongState = { ...state, input: 'LUNX' }
+  const rejected = submitCipherWord(game, wrongState)
+  assert.equal(rejected.result, 'wrong')
+  assert.equal(rejected.state.lastResult, 'wrong')
+  assert.equal(rejected.state.input, 'LUNX')
 
-  state = deleteCipherLetter(wrong.state)
-  assert.equal(state.lastResult, 'none')
+  const repaired = deleteCipherLetter(rejected.state)
+  assert.equal(repaired.lastResult, 'none')
+  assert.equal(repaired.input, 'LUN')
 })
 
-test('deciphering RENO, MAGIA and REGALO completes the mission', () => {
+test('deciphering LUNA, TRINEO and ESTRELLA completes the mission', () => {
   const game = createCipherGame(CIPHER_WORDS)
   let state = createCipherState(game)
 
@@ -166,9 +173,9 @@ test('deciphering RENO, MAGIA and REGALO completes the mission', () => {
   assert.equal(typeCipherLetter(state, game, 'A'), state)
 })
 
-test('a correct word needs an explicit advance before the next one', () => {
+test('a correct word needs exactly one advance before the next one', () => {
   const game = createCipherGame(CIPHER_WORDS)
-  let state = typeWord(createCipherState(game), game, 'RENO')
+  let state = typeWord(createCipherState(game), game, 'LUNA')
   state = submitCipherWord(game, state).state
 
   const untouched = createCipherState(game)
@@ -179,5 +186,7 @@ test('a correct word needs an explicit advance before the next one', () => {
   assert.equal(next.roundIndex, 1)
   assert.equal(next.input, '')
   assert.equal(next.lastResult, 'none')
-  assert.equal(currentCipherRound(game, next)?.word, 'MAGIA')
+  assert.equal(currentCipherRound(game, next)?.word, 'TRINEO')
+
+  assert.equal(advanceCipherRound(game, next), next, 'a second advance cannot skip a word')
 })

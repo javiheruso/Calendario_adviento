@@ -132,6 +132,19 @@ export function isSnowmanComplete(state: SnowmanState): boolean {
 }
 
 /**
+ * Single phase image to show: 0 = base, 1 = hat, 2 = nose, 3 = scarf and
+ * 4 = buttons. The UI renders one large image and swaps it after every correct
+ * choice instead of keeping a thumbnail history.
+ */
+export function snowmanPhaseImageIndex(state: SnowmanState): number {
+  if (state.stage === 'complete') {
+    return SNOWMAN_PHASE_COUNT
+  }
+
+  return Math.max(0, Math.min(SNOWMAN_PHASE_COUNT, state.step))
+}
+
+/**
  * Applies one option for the current phase. A correct answer advances to the
  * next complete phase; a wrong answer is recorded as feedback only and the
  * same phase stays open for another try.

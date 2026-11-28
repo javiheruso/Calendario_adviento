@@ -13,18 +13,11 @@ export const TOUCH_BAG_SLOT_IDS = ['first', 'second', 'third'] as const
 
 export type TouchBagSlotId = (typeof TOUCH_BAG_SLOT_IDS)[number]
 
-export interface TouchBagSafeIdea {
-  readonly id: string
-  readonly label: string
-}
-
-/** Safe examples for the adult; the bag may contain any other safe object. */
-export const TOUCH_BAG_SAFE_IDEAS: readonly TouchBagSafeIdea[] = [
-  { id: 'spoon', label: 'Una cuchara de madera' },
-  { id: 'ball', label: 'Una pelota pequeña' },
-  { id: 'sponge', label: 'Una esponja suave' },
-]
-
+/**
+ * The child surface never lists example objects: the family chooses the three
+ * objects privately. Keeping the domain free of examples prevents that content
+ * from leaking back into the mission view.
+ */
 export interface TouchBagState {
   readonly marked: Readonly<Record<TouchBagSlotId, boolean>>
 }

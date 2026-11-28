@@ -43,8 +43,13 @@ export interface CharadesState {
   readonly animals: readonly CharadeAnimal[]
   readonly roundIndex: number
   readonly hits: number
-  /** Hidden by default so only the actor can choose to look. */
+  /** Visible only while the actor holds the reveal control. */
   readonly animalVisible: boolean
+  /**
+   * True when the card was shown and then hidden again during the current
+   * animal. The manual hit is unavailable until that full cycle happened.
+   */
+  readonly revealedOnce: boolean
   readonly phase: CharadesPhase
 }
 
@@ -59,6 +64,7 @@ export function createCharadesState(
     roundIndex: 0,
     hits: 0,
     animalVisible: false,
+    revealedOnce: false,
     phase: 'playing',
   }
 }
@@ -69,28 +75,62 @@ export function currentCharadeAnimal(
   return state.animals[state.roundIndex] ?? null
 }
 
-/** Shows or hides the current card. Never plays audio and never changes progress. */
-export function toggleCharadeAnimal(state: CharadesState): CharadesState {
-  if (state.phase !== 'playing') {
+/**
+ * Reveals the card while the actor holds the control. Repeating the call is
+ * idempotent. No audio is played and progress never changes.
+ */
+export function revealCharadeAnimal(state: CharadesState): CharadesState {
+  if (state.phase !== 'playing' || state.animalVisible) {
     return state
   }
 
-  return { ...state, animalVisible: !state.animalVisible }
+  return { ...state, animalVisible: true }
 }
 
 /**
- * Registers one guessed animal. The card hides again and the next animal waits
- * hidden. Three confirmed hits complete the mission.
+ * Hides the card on release, cancel, outside, focus loss or a visibility
+ * change. The first completed show → hide cycle unlocks the manual hit.
+ */
+export function hideCharadeAnimal(state: CharadesState): CharadesState {
+  if (state.phase !== 'playing' || !state.animalVisible) {
+    return state
+  }
+
+  return { ...state, animalVisible: false, revealedOnce: true }
+}
+
+/** Backwards-compatible helper used by tests and simple toggles. */
+export function toggleCharadeAnimal(state: CharadesState): CharadesState {
+  return state.animalVisible ? hideCharadeAnimal(state) : revealCharadeAnimal(state)
+}
+
+/** The manual hit requires a card that was shown and then hidden again. */
+export function canConfirmCharadeHit(state: CharadesState): boolean {
+  return (
+    state.phase === 'playing' && state.revealedOnce && !state.animalVisible
+  )
+}
+
+/**
+ * Registers one guessed animal only after the reveal gate is satisfied. The
+ * next animal waits hidden with a fresh reveal gate. Three confirmed hits
+ * complete the mission.
  */
 export function confirmCharadeHit(state: CharadesState): CharadesState {
-  if (state.phase !== 'playing') {
+  if (!canConfirmCharadeHit(state)) {
     return state
   }
 
   const hits = state.hits + 1
 
   if (hits >= CHARADES_ROUNDS) {
-    return { ...state, hits, animalVisible: false, phase: 'complete' }
+    return {
+      ...state,
+      hits,
+      animalVisible: false,
+      revealedOnce: false,
+      phase: 'complete',
+    }
   }
 
   return {
@@ -98,6 +138,7 @@ export function confirmCharadeHit(state: CharadesState): CharadesState {
     hits,
     roundIndex: state.roundIndex + 1,
     animalVisible: false,
+    revealedOnce: false,
   }
 }
 

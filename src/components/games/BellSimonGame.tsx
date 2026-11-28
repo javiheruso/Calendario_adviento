@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { getAsset, type AssetId } from '../../domain/assets'
 import {
   beginSimonInput,
   createSimonGame,
@@ -8,17 +7,13 @@ import {
   isSimonComplete,
   pressSimonBell,
   replaySimonRound,
+  simonPressFeedback,
   type SimonProgress,
 } from '../../domain/games/bellSimon'
-import { AssetGlyph } from '../AssetGlyph'
+import { BellStand, type BellDefinition, type BellFeedback } from './BellStand'
 import type { MissionGameProps } from './types'
 
-const BELLS: readonly {
-  note: number
-  label: string
-  tone: string
-  asset: AssetId
-}[] = [
+const BELLS: readonly BellDefinition[] = [
   { note: 0, label: 'Do', tone: 'red', asset: 'game.simon.bell.red' },
   { note: 1, label: 'Re', tone: 'blue', asset: 'game.simon.bell.blue' },
   { note: 2, label: 'Mi', tone: 'green', asset: 'game.simon.bell.green' },
@@ -28,17 +23,21 @@ const BELLS: readonly {
 const NOTE_ON_MS = 380
 const NOTE_GAP_MS = 220
 const LEAD_IN_MS = 500
+const FEEDBACK_MS = 420
 
 /**
  * Day 18: Simon with four bells and five cumulative rounds (two to six notes).
  *
- * The game is silent until real audio exists: bells use colours and tone labels,
- * replaying shows the sequence again, and no background music plays during it.
+ * The game is silent until real audio exists: bells use colours and tone
+ * labels, replaying shows the sequence again, and no background music plays
+ * during it. The four final bell images sit on the stand's rings; playback and
+ * a correct/wrong press only add illumination and a short sway.
  */
 export function BellSimonGame({ onComplete }: MissionGameProps) {
   const [game] = useState(() => createSimonGame())
   const [progress, setProgress] = useState<SimonProgress>(() => createSimonProgress(game))
   const [activeBell, setActiveBell] = useState<number | null>(null)
+  const [feedback, setFeedback] = useState<BellFeedback | null>(null)
 
   const sequence = currentSimonSequence(game, progress)
   const complete = isSimonComplete(progress)
@@ -74,6 +73,15 @@ export function BellSimonGame({ onComplete }: MissionGameProps) {
     }
   }, [progress.phase, progress.round, sequence])
 
+  useEffect(() => {
+    if (!feedback) {
+      return
+    }
+
+    const timer = window.setTimeout(() => setFeedback(null), FEEDBACK_MS)
+    return () => window.clearTimeout(timer)
+  }, [feedback])
+
   function pressBell(note: number) {
     if (progress.phase !== 'input') {
       return
@@ -81,6 +89,12 @@ export function BellSimonGame({ onComplete }: MissionGameProps) {
 
     const outcome = pressSimonBell(game, progress, note)
     setProgress(outcome.progress)
+
+    const kind = simonPressFeedback(outcome.result)
+
+    if (kind) {
+      setFeedback({ note, kind })
+    }
 
     if (outcome.result === 'failed') {
       setActiveBell(null)
@@ -98,33 +112,14 @@ export function BellSimonGame({ onComplete }: MissionGameProps) {
         Ronda {progress.round + 1} de {game.rounds.length} · {sequence.length} notas
       </p>
 
-      <div className="simon-stage">
-        <AssetGlyph
-          asset={getAsset('game.simon.stand')}
-          label={false}
-          className="simon-stage__stand"
-          priority
-        />
-        <div className="simon-bells" aria-label="Campanas mágicas">
-          {BELLS.map((bell) => (
-            <button
-              key={bell.note}
-              type="button"
-              className={`simon-bell simon-bell--${bell.tone}${
-                activeBell === bell.note ? ' simon-bell--active' : ''
-              }`}
-              onClick={() => pressBell(bell.note)}
-              disabled={progress.phase !== 'input' || complete}
-              aria-label={`Campana ${bell.label}`}
-            >
-              <span className="simon-bell__glyph" aria-hidden="true">
-                <AssetGlyph asset={getAsset(bell.asset)} label={false} />
-              </span>
-              <span className="simon-bell__label">{bell.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      <BellStand
+        bells={BELLS}
+        activeBell={activeBell}
+        feedback={feedback}
+        disabled={progress.phase !== 'input' || complete}
+        label="Campanas mágicas"
+        onPress={pressBell}
+      />
 
       {progress.phase === 'failed' ? (
         <div className="notice" role="status">

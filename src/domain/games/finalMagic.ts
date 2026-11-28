@@ -1,98 +1,116 @@
 /**
  * Day 24 magic crystal rules.
  *
- * The child deciphers LUZ, Y and MAGIA with the fixed day 22 alphabet, then
- * pronounces the phrase aloud. Pronunciation is confirmed manually: there is
- * no microphone permission or automatic voice recognition.
+ * One secret phrase is written as a single cipher: nine symbols grouped 3-1-5
+ * with visual spaces between the groups. The child fills one slot per letter,
+ * verifies once and can erase letters before checking. The phrase is never
+ * shown in the intro or the help; it only appears after the cipher is solved,
+ * when the child is asked to pronounce it aloud.
+ *
+ * Pronunciation is confirmed manually: there is no microphone permission or
+ * automatic voice recognition. The fixed day 22 alphabet is reused unchanged.
  */
 
 import {
-  advanceCipherRound,
-  clearCipherInput,
-  createCipherGame,
-  createCipherState,
-  currentCipherRound,
-  deleteCipherLetter,
-  isCipherComplete,
-  submitCipherWord,
-  typeCipherLetter,
-  type CipherGame,
-  type CipherResult,
-  type CipherRound,
-  type SymbolCipherState,
+  symbolsForWord,
+  type CipherSymbolId,
 } from './symbolCipher'
 
 export const FINAL_MAGIC_PHRASE = 'LUZ Y MAGIA'
-export const FINAL_MAGIC_WORDS = ['LUZ', 'Y', 'MAGIA'] as const
-
-/** The approved day 22 alphabet is reused unchanged. */
-const FINAL_MAGIC_GAME: CipherGame = createCipherGame(FINAL_MAGIC_WORDS)
+export const FINAL_MAGIC_GROUPS = ['LUZ', 'Y', 'MAGIA'] as const
+export const FINAL_MAGIC_GROUP_LENGTHS = FINAL_MAGIC_GROUPS.map(
+  (group) => group.length,
+)
+/** Letters without the visual spaces: nine input slots. */
+export const FINAL_MAGIC_LETTERS = FINAL_MAGIC_GROUPS.join('')
+export const FINAL_MAGIC_SYMBOL_GROUPS: readonly (readonly CipherSymbolId[])[] =
+  FINAL_MAGIC_GROUPS.map((group) => symbolsForWord(group))
+export const FINAL_MAGIC_SYMBOLS: readonly CipherSymbolId[] =
+  FINAL_MAGIC_SYMBOL_GROUPS.flat()
 
 export interface FinalMagicState {
-  readonly cipher: SymbolCipherState
+  readonly input: string
+  readonly solved: boolean
   readonly pronunciationConfirmed: boolean
 }
 
 export function createFinalMagicState(): FinalMagicState {
-  return {
-    cipher: createCipherState(FINAL_MAGIC_GAME),
-    pronunciationConfirmed: false,
-  }
+  return { input: '', solved: false, pronunciationConfirmed: false }
 }
 
-export function currentMagicRound(state: FinalMagicState): CipherRound | null {
-  return currentCipherRound(FINAL_MAGIC_GAME, state.cipher)
+function isLetter(letter: string): boolean {
+  return /^[A-Z]$/.test(letter)
 }
 
+/** Appends one letter while the single nine-letter cipher has empty slots. */
 export function typeMagicLetter(
   state: FinalMagicState,
   letter: string,
 ): FinalMagicState {
-  const cipher = typeCipherLetter(state.cipher, FINAL_MAGIC_GAME, letter)
+  if (state.solved || state.input.length >= FINAL_MAGIC_LETTERS.length) {
+    return state
+  }
 
-  return cipher === state.cipher ? state : { ...state, cipher }
+  const normalized = letter.trim().toUpperCase()
+
+  if (!isLetter(normalized)) {
+    return state
+  }
+
+  return { ...state, input: `${state.input}${normalized}` }
 }
 
 export function deleteMagicLetter(state: FinalMagicState): FinalMagicState {
-  const cipher = deleteCipherLetter(state.cipher)
+  if (state.solved || state.input.length === 0) {
+    return state
+  }
 
-  return cipher === state.cipher ? state : { ...state, cipher }
+  return { ...state, input: state.input.slice(0, -1) }
 }
 
 export function clearMagicInput(state: FinalMagicState): FinalMagicState {
-  const cipher = clearCipherInput(state.cipher)
-
-  return cipher === state.cipher ? state : { ...state, cipher }
-}
-
-export interface MagicWordOutcome {
-  readonly state: FinalMagicState
-  readonly result: CipherResult
-}
-
-export function submitMagicWord(state: FinalMagicState): MagicWordOutcome {
-  const outcome = submitCipherWord(FINAL_MAGIC_GAME, state.cipher)
-
-  return {
-    state:
-      outcome.state === state.cipher ? state : { ...state, cipher: outcome.state },
-    result: outcome.result,
+  if (state.solved || state.input.length === 0) {
+    return state
   }
+
+  return { ...state, input: '' }
 }
 
-export function advanceMagicWord(state: FinalMagicState): FinalMagicState {
-  const cipher = advanceCipherRound(FINAL_MAGIC_GAME, state.cipher)
+export type FinalMagicResult = 'correct' | 'wrong' | 'incomplete' | 'ignored'
 
-  return cipher === state.cipher ? state : { ...state, cipher }
+export interface FinalMagicOutcome {
+  readonly state: FinalMagicState
+  readonly result: FinalMagicResult
+}
+
+/**
+ * Single verification for the whole phrase. An incomplete or wrong answer
+ * leaves every letter editable; a correct answer locks the input and opens the
+ * pronunciation step.
+ */
+export function submitMagicPhrase(state: FinalMagicState): FinalMagicOutcome {
+  if (state.solved) {
+    return { state, result: 'ignored' }
+  }
+
+  if (state.input.length < FINAL_MAGIC_LETTERS.length) {
+    return { state, result: 'incomplete' }
+  }
+
+  if (state.input !== FINAL_MAGIC_LETTERS) {
+    return { state, result: 'wrong' }
+  }
+
+  return { state: { ...state, solved: true }, result: 'correct' }
 }
 
 export function isMagicWordsComplete(state: FinalMagicState): boolean {
-  return isCipherComplete(state.cipher)
+  return state.solved
 }
 
-/** Pronunciation is only available after both words are deciphered. */
+/** Pronunciation is only available after the single cipher is solved. */
 export function confirmMagicPronunciation(state: FinalMagicState): FinalMagicState {
-  if (!isMagicWordsComplete(state) || state.pronunciationConfirmed) {
+  if (!state.solved || state.pronunciationConfirmed) {
     return state
   }
 
@@ -100,10 +118,5 @@ export function confirmMagicPronunciation(state: FinalMagicState): FinalMagicSta
 }
 
 export function isMagicComplete(state: FinalMagicState): boolean {
-  return isMagicWordsComplete(state) && state.pronunciationConfirmed
-}
-
-/** Exposed for tests and for the reference table in the UI. */
-export function magicGame(): CipherGame {
-  return FINAL_MAGIC_GAME
+  return state.solved && state.pronunciationConfirmed
 }

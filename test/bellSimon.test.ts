@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import { strict as assert } from 'node:assert'
 import {
   SIMON_BELL_COUNT,
+  SIMON_BELL_POSITIONS,
   SIMON_FIRST_NOTES,
   SIMON_ROUNDS,
   beginSimonInput,
@@ -11,6 +12,7 @@ import {
   isSimonComplete,
   pressSimonBell,
   replaySimonRound,
+  simonPressFeedback,
 } from '../src/domain/games/bellSimon'
 import type { SimonGame, SimonProgress } from '../src/domain/games/bellSimon'
 import { sequenceRandom } from './random'
@@ -58,6 +60,40 @@ test('five cumulative rounds grow from two to six notes', () => {
       )
     }
   }
+})
+
+test('the four bells have distinct stable ring positions', () => {
+  assert.equal(SIMON_BELL_POSITIONS.length, SIMON_BELL_COUNT)
+  assert.deepEqual(
+    SIMON_BELL_POSITIONS.map((position) => position.note),
+    [0, 1, 2, 3],
+  )
+  assert.equal(new Set(SIMON_BELL_POSITIONS.map((position) => position.left)).size, 4)
+  assert.equal(
+    new Set(SIMON_BELL_POSITIONS.map((position) => position.top)).size,
+    1,
+    'all four bells hang from the same flat peg bar',
+  )
+  assert.ok(
+    SIMON_BELL_POSITIONS.every(
+      (position, index, all) =>
+        index === 0 || position.left > (all[index - 1]?.left ?? 0),
+    ),
+    'ring positions must stay in left-to-right order',
+  )
+
+  for (const position of SIMON_BELL_POSITIONS) {
+    assert.ok(position.left > 0 && position.left < 100)
+    assert.ok(position.top > 0 && position.top < 100)
+  }
+})
+
+test('bell feedback distinguishes correct, wrong and ignored presses', () => {
+  assert.equal(simonPressFeedback('progress'), 'correct')
+  assert.equal(simonPressFeedback('round-complete'), 'correct')
+  assert.equal(simonPressFeedback('game-complete'), 'correct')
+  assert.equal(simonPressFeedback('failed'), 'wrong')
+  assert.equal(simonPressFeedback('ignored'), null)
 })
 
 test('the game starts by showing and accepts input afterwards', () => {

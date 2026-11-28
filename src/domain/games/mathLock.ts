@@ -90,7 +90,7 @@ export type MathAidLevel = 0 | 1 | 2
 
 export const MATH_AID_MESSAGES: readonly (string | null)[] = [
   null,
-  'Sustituye cada dibujo por su número: árbol 5, regalo 3 y reno 4.',
+  'Mira la tabla del cofre: cada dibujo ya tiene su valor al lado.',
   '¿Cuánto falta a 3 para llegar a 5? Ese es el valor de la estrella.',
 ]
 

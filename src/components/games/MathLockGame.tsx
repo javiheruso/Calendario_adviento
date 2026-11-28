@@ -49,13 +49,7 @@ function expressionLabel(operation: MathOperation): string {
     .join(' ')
 }
 
-function ExpressionView({
-  operation,
-  showNumbers,
-}: {
-  operation: MathOperation
-  showNumbers: boolean
-}) {
+function ExpressionView({ operation }: { operation: MathOperation }) {
   return (
     <div className="math-expression" aria-label={expressionLabel(operation)}>
       {operation.terms.map((term, index) => (
@@ -72,9 +66,6 @@ function ExpressionView({
           <span className="math-expression__symbol" aria-hidden="true">
             <AssetGlyph asset={getAsset(SYMBOL_META[term.symbol].asset)} label={false} />
           </span>
-          {showNumbers ? (
-            <span className="math-expression__value">{symbolValue(term.symbol)}</span>
-          ) : null}
         </span>
       ))}
     </div>
@@ -118,7 +109,6 @@ export function MathLockGame({ onComplete }: MissionGameProps) {
   const current = currentMathOperation(state)
   const operationsComplete = isMathOperationsComplete(state)
   const aidMessage = state.aidLevel === 0 ? null : MATH_AID_MESSAGES[state.aidLevel]
-  const showNumbers = state.aidLevel >= 1
 
   function guessHidden(value: number) {
     const next = submitHiddenValue(state, value)
@@ -224,8 +214,10 @@ export function MathLockGame({ onComplete }: MissionGameProps) {
                       asset={getAsset(SYMBOL_META[symbol].asset)}
                       label={false}
                     />
-                  </span>{' '}
-                  {SYMBOL_META[symbol].label}
+                  </span>
+                  <span className="visually-hidden">
+                    {SYMBOL_META[symbol].label}
+                  </span>
                 </th>
                 <td className="math-table__value">{solved ? symbolValue(symbol) : '?'}</td>
               </tr>
@@ -253,7 +245,7 @@ export function MathLockGame({ onComplete }: MissionGameProps) {
           <h3 id="math-operation-title">
             Operación {state.operationsSolved.length + 1} de {MATH_OPERATIONS.length}
           </h3>
-          <ExpressionView operation={current.operation} showNumbers={showNumbers} />
+          <ExpressionView operation={current.operation} />
           <p className="game__hint">¿Cuál es el resultado? Toca un número.</p>
           <DigitPad
             label="Elegir el resultado de la operación"

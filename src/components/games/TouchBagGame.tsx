@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { getAsset, type AssetId } from '../../domain/assets'
+import { getAsset } from '../../domain/assets'
 import {
   TOUCH_BAG_HITS,
-  TOUCH_BAG_SAFE_IDEAS,
   TOUCH_BAG_SLOT_IDS,
   createTouchBagState,
   isTouchBagComplete,
@@ -13,12 +12,6 @@ import {
 import { AssetGlyph } from '../AssetGlyph'
 import type { MissionGameProps } from './types'
 
-const SAFE_IDEA_ASSETS: Readonly<Record<string, AssetId>> = {
-  spoon: 'game.touch.spoon',
-  ball: 'game.touch.ball',
-  sponge: 'game.touch.sponge',
-}
-
 const SLOT_LABELS: Readonly<Record<TouchBagSlotId, string>> = {
   first: 'Primer objeto identificado',
   second: 'Segundo objeto identificado',
@@ -26,9 +19,11 @@ const SLOT_LABELS: Readonly<Record<TouchBagSlotId, string>> = {
 }
 
 /**
- * Day 20: three safe objects inside an opaque bag. The child identifies them by
- * touch only, without looking, and the family marks three hits manually. No
- * camera is used and a mark can be undone without penalty.
+ * Day 20: three safe objects inside an opaque bag. The family chooses the
+ * objects privately; the child identifies them by touch only, without looking,
+ * and the family marks three hits manually. The child surface deliberately
+ * contains no example-object list. No camera is used and a mark can be undone
+ * without penalty.
  */
 export function TouchBagGame({ onComplete }: MissionGameProps) {
   const [state, setState] = useState(createTouchBagState)
@@ -38,10 +33,9 @@ export function TouchBagGame({ onComplete }: MissionGameProps) {
   return (
     <div className="game game--touch-bag">
       <p className="game__lead">
-        Un adulto mete tres objetos seguros en una bolsa opaca: nada cortante, nada
-        que se rompa y nada demasiado pequeño. Sin mirar dentro, mete la mano y
-        adivina qué es cada objeto solo con el tacto. Marca cada acierto cuando lo
-        adivinéis entre todos.
+        Un adulto prepara una bolsa opaca con tres objetos seguros que haya elegido
+        sin que la niña los vea. Sin mirar dentro, mete la mano y adivina qué es cada
+        objeto solo con el tacto. Marca cada acierto cuando lo adivinéis entre todos.
       </p>
 
       <div className="touch-bag-stage">
@@ -60,23 +54,6 @@ export function TouchBagGame({ onComplete }: MissionGameProps) {
           La bolsa se queda fuera de la vista. Nada de mirar por la abertura.
         </p>
       </div>
-
-      <section className="touch-bag-ideas" aria-labelledby="touch-bag-ideas-title">
-        <h3 id="touch-bag-ideas-title">Ideas de objetos seguros</h3>
-        <p>Son solo ejemplos: el adulto puede elegir otros tres objetos seguros.</p>
-        <ul>
-          {TOUCH_BAG_SAFE_IDEAS.map((idea) => (
-            <li key={idea.id}>
-              <span className="touch-bag-idea__glyph" aria-hidden="true">
-                {SAFE_IDEA_ASSETS[idea.id] ? (
-                  <AssetGlyph asset={getAsset(SAFE_IDEA_ASSETS[idea.id])} label={false} />
-                ) : null}
-              </span>
-              {idea.label}
-            </li>
-          ))}
-        </ul>
-      </section>
 
       <p className="game__status" role="status">
         Aciertos marcados: {marked} de {TOUCH_BAG_HITS}

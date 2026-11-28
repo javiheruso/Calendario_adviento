@@ -14,6 +14,28 @@ export const SIMON_BELL_COUNT = 4
 export const SIMON_ROUNDS = 5
 export const SIMON_FIRST_NOTES = 2
 
+export interface SimonBellPosition {
+  readonly note: number
+  /** Horizontal centre on the stand, as a percentage. */
+  readonly left: number
+  /** Vertical centre on the stand, as a percentage. */
+  readonly top: number
+}
+
+/**
+ * Ring centres measured on `game.simon.stand` (1448×1086). Day 18 and the day
+ * 24 memory crystal share them so the four real bells hang from the four hooks
+ * instead of floating in a generic grid. The shared `top` is the bell centre
+ * just below the flat peg bar; the CSS bell width is kept narrow enough for
+ * four bells to sit under the four rings without overlapping.
+ */
+export const SIMON_BELL_POSITIONS: readonly SimonBellPosition[] = [
+  { note: 0, left: 27, top: 48 },
+  { note: 1, left: 42, top: 48 },
+  { note: 2, left: 59, top: 48 },
+  { note: 3, left: 74, top: 48 },
+]
+
 export interface SimonGame {
   /** Cumulative sequences; each one starts with the previous one. */
   readonly rounds: readonly (readonly number[])[]
@@ -141,4 +163,19 @@ export function replaySimonRound(progress: SimonProgress): SimonProgress {
 
 export function isSimonComplete(progress: SimonProgress): boolean {
   return progress.phase === 'complete'
+}
+
+/** Visual feedback kind for a bell press; null when the press was ignored. */
+export function simonPressFeedback(
+  result: SimonPressResult,
+): 'correct' | 'wrong' | null {
+  if (result === 'failed') {
+    return 'wrong'
+  }
+
+  if (result === 'progress' || result === 'round-complete' || result === 'game-complete') {
+    return 'correct'
+  }
+
+  return null
 }

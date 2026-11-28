@@ -13,6 +13,7 @@ import {
   createSnowmanState,
   currentSnowmanPhase,
   isSnowmanComplete,
+  snowmanPhaseImageIndex,
   startSnowmanBuilding,
   type SnowmanState,
 } from '../src/domain/games/snowman'
@@ -111,6 +112,36 @@ test('correct choices advance through the four complete phases in order', () => 
   assert.equal(completedSnowmanPhases(state), SNOWMAN_PHASE_COUNT)
   assert.equal(currentSnowmanPhase(state), null)
   assert.equal(chooseSnowmanOption(state, 'top'), state)
+})
+
+test('a single phase image index is shown and swapped after each correct choice', () => {
+  let state = startSnowmanBuilding(createSnowmanState())
+  assert.equal(snowmanPhaseImageIndex(state), 0, 'base image before the first choice')
+
+  const indexes: number[] = [snowmanPhaseImageIndex(state)]
+
+  for (let step = 0; step < SNOWMAN_PHASE_COUNT; step += 1) {
+    state = solvePhase(state)
+    indexes.push(snowmanPhaseImageIndex(state))
+  }
+
+  assert.deepEqual(indexes, [0, 1, 2, 3, 4])
+  assert.equal(new Set(indexes).size, indexes.length, 'no thumbnail history is implied')
+})
+
+test('the observation and model use the full phase without losing state', () => {
+  const observing = createSnowmanState()
+  assert.equal(snowmanPhaseImageIndex(observing), 0)
+
+  let state = startSnowmanBuilding(observing)
+  state = solvePhase(state)
+  const step = state.step
+  const attempts = state.attempts
+
+  // Consulting the model is a UI-only toggle; the domain state is unchanged.
+  assert.equal(state.step, step)
+  assert.equal(state.attempts, attempts)
+  assert.equal(snowmanPhaseImageIndex(state), 1)
 })
 
 test('the mission completes only after the last phase', () => {

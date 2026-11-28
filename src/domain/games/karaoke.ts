@@ -33,6 +33,38 @@ export const KARAOKE_STYLE_SECONDS = 12
 export const KARAOKE_TOTAL_SECONDS =
   KARAOKE_COUNTDOWN_SECONDS + KARAOKE_SONG_SECONDS
 
+/**
+ * Authorized-content seam for day 7.
+ *
+ * No final lyric or music is shipped or invented here. When the family approves
+ * a carol, only this configuration changes: an authorized lyric source, an
+ * instrumental/vocal-guide path under `public/` and the approved timing. The
+ * game UI, six styles and optional recording keep working unchanged.
+ */
+export interface KaraokeContentConfig {
+  readonly authorized: boolean
+  readonly lyricSource: 'provisional' | 'authorized'
+  /** Public-relative path to the authorized instrumental track, if any. */
+  readonly instrumentalPath: string | null
+  /** Public-relative path to a guide vocal or reference recording, if any. */
+  readonly guideVocalPath: string | null
+  readonly countdownSeconds: number
+  readonly songSeconds: number
+  readonly styleSeconds: number
+  readonly lineSeconds: number
+}
+
+export const KARAOKE_CONTENT_CONFIG: KaraokeContentConfig = {
+  authorized: false,
+  lyricSource: 'provisional',
+  instrumentalPath: null,
+  guideVocalPath: null,
+  countdownSeconds: KARAOKE_COUNTDOWN_SECONDS,
+  songSeconds: KARAOKE_SONG_SECONDS,
+  styleSeconds: KARAOKE_STYLE_SECONDS,
+  lineSeconds: KARAOKE_LINE_SECONDS,
+}
+
 /** Approved style order from the mission specification. */
 export const KARAOKE_STYLES: readonly KaraokeStyle[] = [
   {

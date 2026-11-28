@@ -8,6 +8,7 @@ import {
   createSnowmanState,
   currentSnowmanPhase,
   isSnowmanComplete,
+  snowmanPhaseImageIndex,
   startSnowmanBuilding,
   type SnowmanCategory,
   type SnowmanState,
@@ -57,33 +58,45 @@ const PHASE_ASSETS: readonly AssetId[] = [
   'game.snowman.phase.buttons',
 ]
 
+const FULL_MODEL_INDEX = PHASE_ASSETS.length - 1
+
 function optionAsset(category: SnowmanCategory, optionId: string): AssetId {
   return OPTION_ASSETS[category][optionId] ?? PHASE_ASSETS[0]
 }
 
-function PhaseGallery({ count, title }: { count: number; title: string }) {
-  const visible = PHASE_ASSETS.slice(0, Math.max(1, Math.min(PHASE_ASSETS.length, count + 1)))
-
+/**
+ * One large Copito image for the current phase.
+ *
+ * Every complete phase image is mounted in the same fixed-ratio box so the
+ * five files are preloaded and the layout never jumps; only the active image is
+ * visible. There is no thumbnail history and no layered overlay.
+ */
+function SnowmanFigure({ index, label }: { index: number; label: string }) {
   return (
-    <section className="snowman-gallery" aria-label={title}>
-      <p className="snowman-gallery__title">{title}</p>
-      <ol className="snowman-gallery__list">
-        {visible.map((assetId) => (
-          <li key={assetId}>
-            <AssetGlyph asset={getAsset(assetId)} label={false} className="snowman-gallery__image" />
-          </li>
+    <figure className="snowman-figure" aria-label={label}>
+      <div className="snowman-figure__box">
+        {PHASE_ASSETS.map((assetId, imageIndex) => (
+          <AssetGlyph
+            key={assetId}
+            asset={getAsset(assetId)}
+            label={false}
+            className={`snowman-figure__image${
+              imageIndex === index ? ' snowman-figure__image--active' : ''
+            }`}
+            priority
+          />
         ))}
-      </ol>
-    </section>
+      </div>
+    </figure>
   )
 }
 
 /**
  * Day 21: observe Copito's fixed model for fifteen seconds, then recreate it
  * phase by phase. Each phase offers three complete options; a wrong choice is
- * kind feedback and never advances or penalises. The complete phase images are
- * the only visuals used for the model and the rebuilt snowman, so nothing is
- * layered or combined.
+ * kind feedback and never advances or penalises. A single large image shows the
+ * current phase and is swapped on every correct choice. The model can be
+ * consulted temporarily without losing the current state.
  */
 export function SnowmanGame({ onComplete }: MissionGameProps) {
   const [state, setState] = useState<SnowmanState>(() => createSnowmanState())
@@ -94,6 +107,8 @@ export function SnowmanGame({ onComplete }: MissionGameProps) {
   const observing = state.stage === 'observing'
   const phase = currentSnowmanPhase(state)
   const solvedPhases = completedSnowmanPhases(state)
+  const phaseImageIndex = snowmanPhaseImageIndex(state)
+  const displayIndex = observing || showModel ? FULL_MODEL_INDEX : phaseImageIndex
 
   useEffect(() => {
     if (state.stage !== 'observing') {
@@ -119,11 +134,6 @@ export function SnowmanGame({ onComplete }: MissionGameProps) {
     const next = chooseSnowmanOption(state, optionId)
     setState(next)
 
-    if (isSnowmanComplete(next)) {
-      setFeedback('¡Copito está vestido igual que antes!')
-      return
-    }
-
     if (next.lastResult === 'wrong') {
       setFeedback(
         `No pasa nada: Copito te sonríe. Ese no es el detalle correcto. Prueba otra vez con ${CATEGORY_LABELS[category].toLowerCase()}.`,
@@ -132,7 +142,13 @@ export function SnowmanGame({ onComplete }: MissionGameProps) {
     }
 
     if (next.lastResult === 'correct') {
-      setFeedback(`¡Bien! ${label} es correcto. Copito ya tiene un detalle más.`)
+      setShowModel(false)
+
+      if (isSnowmanComplete(next)) {
+        setFeedback('¡Copito está vestido igual que antes!')
+      } else {
+        setFeedback(`¡Bien! ${label} es correcto. Copito ya tiene un detalle más.`)
+      }
     }
   }
 
@@ -156,17 +172,10 @@ export function SnowmanGame({ onComplete }: MissionGameProps) {
           <p className="game__status">
             Quedan {secondsLeft} segundos de observación
           </p>
-          <figure className="snowman-model">
-            <AssetGlyph
-              asset={getAsset('game.snowman.phase.buttons')}
-              label={false}
-              className="snowman-model__image"
-              priority
-            />
-            <figcaption className="snowman-model__caption">
-              Sombrero de copa, nariz de zanahoria, bufanda roja y botones de carbón.
-            </figcaption>
-          </figure>
+          <SnowmanFigure index={FULL_MODEL_INDEX} label="Modelo completo de Copito" />
+          <p className="snowman-caption">
+            Sombrero de copa, nariz de zanahoria, bufanda roja y botones de carbón.
+          </p>
         </section>
       ) : null}
 
@@ -180,30 +189,22 @@ export function SnowmanGame({ onComplete }: MissionGameProps) {
               aria-expanded={showModel}
               disabled={complete}
             >
-              {showModel ? 'Ocultar modelo' : 'Ver modelo'}
+              {showModel ? 'Volver a mi Copito' : 'Ver modelo'}
             </button>
           </div>
 
-          {showModel && !complete ? (
-            <figure className="snowman-model snowman-model--consult">
-              <AssetGlyph
-                asset={getAsset('game.snowman.phase.buttons')}
-                label={false}
-                className="snowman-model__image"
-                priority
-              />
-              <figcaption className="snowman-model__caption">
-                Modelo: sombrero de copa, nariz de zanahoria, bufanda roja y botones de
-                carbón.
-              </figcaption>
-            </figure>
-          ) : null}
+          <SnowmanFigure
+            index={displayIndex}
+            label={
+              showModel
+                ? 'Modelo completo de Copito'
+                : `Copito, paso ${phaseImageIndex} de ${SNOWMAN_PHASE_COUNT}`
+            }
+          />
 
           <p className="game__status" role="status">
             Pasos completados: {solvedPhases} de {SNOWMAN_PHASE_COUNT}
           </p>
-
-          <PhaseGallery count={solvedPhases} title="Copito va así" />
 
           {phase && !complete ? (
             <section className="snowman-step" aria-labelledby="snowman-step-title">

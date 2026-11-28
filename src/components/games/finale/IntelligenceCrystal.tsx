@@ -16,6 +16,7 @@ import {
   type FinalIntelSymbol,
 } from '../../../domain/games/finalIntelligence'
 import { AssetGlyph } from '../../AssetGlyph'
+import { useAutoAdvance } from '../../useAutoAdvance'
 import type { CrystalProps } from './types'
 
 interface SymbolMeta {
@@ -65,9 +66,6 @@ function ExpressionView({ operation }: { operation: FinalIntelOperation }) {
           <span className="math-expression__symbol" aria-hidden="true">
             <AssetGlyph asset={getAsset(SYMBOL_META[term.symbol].asset)} label={false} />
           </span>
-          <span className="math-expression__value">
-            {FINAL_INTEL_VALUES[term.symbol]}
-          </span>
         </span>
       ))}
     </div>
@@ -107,6 +105,8 @@ function DigitPad({
 export function IntelligenceCrystal({ onSolved }: CrystalProps) {
   const [state, setState] = useState(createFinalIntelState)
   const [feedback, setFeedback] = useState<string | null>(null)
+
+  useAutoAdvance(state.complete, 1500, onSolved)
 
   function guessHidden(value: number) {
     const next = submitFinalIntelHiddenValue(state, value)
@@ -178,8 +178,10 @@ export function IntelligenceCrystal({ onSolved }: CrystalProps) {
                 <th scope="row">
                   <span className="math-table__symbol" aria-hidden="true">
                     <AssetGlyph asset={getAsset(SYMBOL_META[symbol].asset)} label={false} />
-                  </span>{' '}
-                  {SYMBOL_META[symbol].label}
+                  </span>
+                  <span className="visually-hidden">
+                    {SYMBOL_META[symbol].label}
+                  </span>
                 </th>
                 <td className="math-table__value">
                   {solved ? FINAL_INTEL_VALUES[symbol] : '?'}
