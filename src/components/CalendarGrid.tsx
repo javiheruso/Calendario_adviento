@@ -54,11 +54,14 @@ export function CalendarGrid({
 
   return (
     <section className="calendar" aria-labelledby="calendar-title">
-      <AssetGlyph
-        asset={getAsset('ui.frame.calendar')}
-        label={false}
-        className="calendar__frame"
-      />
+      <figure className="calendar__banner">
+        <AssetGlyph
+          asset={getAsset('ui.frame.calendar')}
+          label={false}
+          className="calendar__banner-image"
+          priority
+        />
+      </figure>
       <h2 id="calendar-title" tabIndex={-1}>
         Las 24 puertas
       </h2>

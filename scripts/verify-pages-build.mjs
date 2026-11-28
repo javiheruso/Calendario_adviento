@@ -14,7 +14,7 @@
  */
 import { spawnSync } from 'node:child_process'
 import { createServer } from 'node:http'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { basename, extname, resolve as resolvePath, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -79,6 +79,38 @@ function declaredImagePaths() {
 
 function contentTypeFor(filePath) {
   return MIME_TYPES[extname(filePath).toLowerCase()] ?? 'application/octet-stream'
+}
+
+/**
+ * Artwork filenames that the primary shell must keep referencing after the
+ * production build: brand logo, page backdrop, calendar banner, both door
+ * states, star tree, mission frame and album book. A missing filename means a
+ * shell surface no longer points at its final asset, even if the file is still
+ * present in `dist/`.
+ */
+const SHELL_ASSET_FILES = [
+  'logo_personajes.webp',
+  'pueblo_horizontal.webp',
+  'pueblo_vertical.webp',
+  'taller_horizontal.webp',
+  'taller_vertical.webp',
+  'marco_calendario.webp',
+  'puerta_cerrada.webp',
+  'puerta_abierta.webp',
+  'arbol_estrellas.webp',
+  'marco_general.webp',
+  'libro_album.webp',
+]
+
+/** Reads the bundled JavaScript and returns the shell artwork still missing. */
+function missingShellReferences() {
+  const assetsDir = resolvePath(distDir, 'assets')
+  const bundle = readdirSync(assetsDir)
+    .filter((fileName) => fileName.endsWith('.js'))
+    .map((fileName) => readFileSync(resolvePath(assetsDir, fileName), 'utf8'))
+    .join('\n')
+
+  return SHELL_ASSET_FILES.filter((fileName) => !bundle.includes(fileName))
 }
 
 function createDistServer() {
@@ -162,6 +194,14 @@ try {
     )
   }
 
+  const missingShellAssets = missingShellReferences()
+
+  if (missingShellAssets.length > 0) {
+    fail(
+      `The production bundle no longer references these shell final assets: ${missingShellAssets.join(', ')}`,
+    )
+  }
+
   const requestedPaths = [...new Set([
     base,
     ...references,
@@ -188,6 +228,9 @@ try {
 
   console.log(
     `Verified ${requestedPaths.length} URLs under ${origin}${base} (${declaredAssets.length} catalog images).`,
+  )
+  console.log(
+    `The production bundle references the ${SHELL_ASSET_FILES.length} primary shell final assets.`,
   )
   console.log('The Pages base path, local assets and every declared catalog image resolve correctly.')
 } catch (error) {

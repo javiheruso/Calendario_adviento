@@ -166,11 +166,14 @@ export function MissionPanel({
 
   return (
     <section className="mission" aria-labelledby="mission-title">
-      <AssetGlyph
-        asset={getAsset('ui.frame.general')}
-        label={false}
-        className="mission__frame"
-      />
+      <figure className="mission__banner">
+        <AssetGlyph
+          asset={getAsset('ui.frame.general')}
+          label={false}
+          className="mission__banner-image"
+          priority
+        />
+      </figure>
       <button type="button" className="link-button" onClick={onBack}>
         <span aria-hidden="true">←</span> {backLabel}
       </button>

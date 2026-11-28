@@ -3702,79 +3702,194 @@ h2:focus-visible {
   line-height: 1;
 }
 
-/* Header logo */
+/* Page backdrop: final town/workshop art behind the shell. */
+.app > *:not(.app__backdrop) {
+  position: relative;
+  z-index: 1;
+}
+
+.app__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.app__backdrop::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  background:
+    linear-gradient(180deg, rgb(11 18 32 / 0.46), rgb(11 18 32 / 0.72)),
+    radial-gradient(circle at 50% 0%, transparent 0%, rgb(11 18 32 / 0.35) 75%);
+}
+
+.app__backdrop-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.72;
+}
+
+.app__backdrop-img--tall {
+  display: none;
+}
+
+@media (orientation: portrait) {
+  .app__backdrop-img--wide {
+    display: none;
+  }
+
+  .app__backdrop-img--tall {
+    display: block;
+  }
+}
+
+/* Header logo: keep the final artwork at its own aspect ratio. */
 .app__logo {
   margin: 0;
 }
 
 .app__logo-image {
   display: block;
-  width: min(100%, 28rem);
+  width: min(100%, 30rem);
   height: auto;
-  max-height: 10rem;
   object-fit: contain;
+  filter: drop-shadow(0 0.6rem 1.4rem rgb(0 0 0 / 0.55));
 }
 
-/* Calendar frame, doors and star tree */
-.calendar__frame {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
+/* Calendar banner, doors and star tree */
+.calendar__banner {
+  margin: 0;
+}
+
+.calendar__banner-image {
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 1rem;
-  opacity: 0.08;
-  pointer-events: none;
+  height: auto;
+  filter: drop-shadow(0 0.5rem 1.2rem rgb(0 0 0 / 0.45));
 }
 
-.calendar > *:not(.calendar__frame) {
-  position: relative;
-  z-index: 1;
+.door {
+  aspect-ratio: 1 / 1;
+  min-height: 0;
+  padding: 0;
+  border-color: var(--border-strong);
+  background: var(--bg-elevated);
 }
 
 .door__art {
   position: absolute;
   inset: 0;
   z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   border-radius: inherit;
-  opacity: 0.2;
   pointer-events: none;
 }
 
 .door__art img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
-.door > .door__number,
-.door > .door__icon,
-.door > .door__state {
-  position: relative;
-  z-index: 1;
+.door--locked .door__art img {
+  filter: grayscale(0.25) brightness(0.82);
 }
 
-.door--locked .door__art {
-  opacity: 0.12;
+.door__number {
+  position: absolute;
+  top: 0.3rem;
+  left: 0.3rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.9rem;
+  height: 1.9rem;
+  padding: 0 0.3rem;
+  border: 1px solid rgb(255 209 102 / 0.55);
+  border-radius: 999px;
+  background: rgb(11 18 32 / 0.82);
+  color: var(--accent-soft);
+  font-size: 0.95rem;
+  line-height: 1;
+  text-shadow: none;
 }
 
-.door--available .door__art,
-.door--mission-complete .door__art,
-.door--gift-found .door__art {
-  opacity: 0.26;
-}
-
-.door__number,
-.door__icon,
-.door__state {
-  text-shadow: 0 1px 4px rgb(0 0 0 / 0.9);
+.door__icon {
+  position: absolute;
+  right: 0.3rem;
+  bottom: 0.3rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0.18rem;
+  border: 1px solid rgb(255 209 102 / 0.45);
+  border-radius: 999px;
+  background: rgb(11 18 32 / 0.82);
+  line-height: 1;
+  text-shadow: none;
 }
 
 .door__icon img {
-  width: 1.2em;
-  height: 1.2em;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* The visible status is conveyed by the door art and the state badge; the text
+   stays in the button label, so it does not need to compete with the artwork. */
+.door__state {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.door__today {
+  z-index: 3;
+}
+
+.tree__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+}
+
+.tree__icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.tree__scene {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+}
+
+.tree__scene-image {
+  width: min(100%, 14rem);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0.8rem 1.5rem rgb(0 0 0 / 0.5));
 }
 
 .star > span {
@@ -3791,26 +3906,17 @@ h2:focus-visible {
   object-fit: contain;
 }
 
-/* Mission frame, narrative character and album book */
-.mission {
-  position: relative;
+/* Mission banner, narrative character and album book */
+.mission__banner {
+  width: min(100%, 24rem);
+  margin: 0 auto;
 }
 
-.mission__frame {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
+.mission__banner-image {
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 1.1rem;
-  opacity: 0.07;
-  pointer-events: none;
-}
-
-.mission > *:not(.mission__frame) {
-  position: relative;
-  z-index: 1;
+  height: auto;
+  filter: drop-shadow(0 0.5rem 1.2rem rgb(0 0 0 / 0.45));
 }
 
 .mission__narrative-row {
@@ -3821,9 +3927,24 @@ h2:focus-visible {
 
 .mission__narrative-art {
   flex: 0 0 auto;
-  width: clamp(3.4rem, 14vw, 5.2rem);
+  width: clamp(5rem, 26vw, 8rem);
   height: auto;
-  max-height: 9rem;
+  max-height: 14rem;
+  object-fit: contain;
+  filter: drop-shadow(0 0.5rem 1rem rgb(0 0 0 / 0.5));
+}
+
+.mission__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(3rem, 16vw, 4.5rem);
+  height: clamp(3rem, 16vw, 4.5rem);
+}
+
+.mission__icon img {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
@@ -3833,9 +3954,10 @@ h2:focus-visible {
 
 .album-hero__image {
   display: block;
-  width: min(100%, 14rem);
+  width: min(100%, 18rem);
   height: auto;
   object-fit: contain;
+  filter: drop-shadow(0 0.5rem 1.2rem rgb(0 0 0 / 0.45));
 }
 
 /* Memory */

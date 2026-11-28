@@ -25,6 +25,14 @@ export function StarTree({ progress, pendingReleasedDays }: StarTreeProps) {
         <p className="tree__count">{starCount} / 24</p>
       </div>
 
+      <figure className="tree__scene">
+        <AssetGlyph
+          asset={getAsset('ui.tree')}
+          label={false}
+          className="tree__scene-image"
+        />
+      </figure>
+
       <ul className="tree__stars" aria-label={`${starCount} de 24 estrellas conseguidas`}>
         {MISSION_DAYS.map((day) => {
           const earned = hasStar(progress, day)

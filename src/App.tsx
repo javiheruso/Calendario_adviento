@@ -11,7 +11,7 @@ import { ChildAudioBar } from './components/ChildAudioBar'
 import { MissionPanel } from './components/MissionPanel'
 import { StarTree } from './components/StarTree'
 import type { AlbumSaveOutcome, SaveRecordingToAlbumInput } from './domain/album'
-import { getAsset } from './domain/assets'
+import { getAsset, type AssetId } from './domain/assets'
 import { getDayStatus, getReleasedDaysWithoutStar } from './domain/calendar'
 import {
   setCameraEnabled,
@@ -451,9 +451,31 @@ export default function App() {
   const pendingReleasedDays = usingDemoProgress
     ? []
     : getReleasedDaysWithoutStar(activeProgress, now)
+  // The final town artwork frames the child calendar and the workshop artwork
+  // frames the mission surfaces. Each pair keeps a wide and a portrait variant.
+  const missionSurface = view.kind === 'mission' || view.kind === 'preview'
+  const backdropWide: AssetId = missionSurface
+    ? 'ui.background.workshop.horizontal'
+    : 'ui.background.town.horizontal'
+  const backdropTall: AssetId = missionSurface
+    ? 'ui.background.workshop.vertical'
+    : 'ui.background.town.vertical'
 
   return (
     <div className="app">
+      <div className="app__backdrop" aria-hidden="true">
+        <AssetGlyph
+          asset={getAsset(backdropWide)}
+          label={false}
+          className="app__backdrop-img app__backdrop-img--wide"
+        />
+        <AssetGlyph
+          asset={getAsset(backdropTall)}
+          label={false}
+          className="app__backdrop-img app__backdrop-img--tall"
+        />
+      </div>
+
       <header className="app__header">
         <figure className="app__logo">
           <AssetGlyph

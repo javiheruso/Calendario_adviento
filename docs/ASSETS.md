@@ -15,8 +15,9 @@ The definitive WebP set extracted from `recursos/Trasto_recursos_web.zip` into `
 | Single source | Every path lives in `src/domain/assets.ts`; components never build media URLs. |
 | Base path | `resolveAssetPath` prefixes Vite's `BASE_URL`, so GitHub Pages sub-paths work. |
 | Lazy by default | `AssetGlyph` renders `loading="lazy"` and `decoding="async"`. |
-| Eager only when needed | A mission scene or current phase passes `priority`, which sets `loading="eager"` and `fetchPriority="high"`. |
+| Eager only when needed | The header logo, the calendar/mission banners and a current mission scene pass `priority`, which sets `loading="eager"` and `fetchPriority="high"`. |
 | No whole-folder preload | The 120-file / 41 MB folder is never requested on first paint; shared icons and doors stream in as they render. |
+| Shell final art | The header logo, page backdrop, calendar banner, both door states, star tree, mission banner and album book render from final images at full strength; only small UI cue glyphs stay at glyph size. |
 | Honest fallback | Only entries without a final asset stay emoji with `provisional: true`. |
 
 ## Verification performed
@@ -24,7 +25,8 @@ The definitive WebP set extracted from `recursos/Trasto_recursos_web.zip` into `
 | Check | Command / method | Result |
 |-------|------------------|--------|
 | Catalog file existence | `npm test` → `test/assets.test.ts` | Every `kind: 'image'` entry resolves to a non-empty file under `public/`. |
-| Built output and Pages base | `npm run verify:pages` | 119 URLs served; 115 catalog images present in `dist/` and resolved under `/calendario_adviento/`. |
+| Primary shell references | `npm test` → `test/shellAssets.test.ts` | The header logo, backdrop, calendar banner, door states, star tree, mission banner and album book reference non-provisional final images, and no faint frame layer hides them. |
+| Built output and Pages base | `npm run verify:pages` | 119 URLs served; 115 catalog images present in `dist/` and resolved under `/calendario_adviento/`; the production bundle still references the 11 primary shell artwork filenames. |
 | Format and dimensions | `file` + `ffprobe` on every final file | 120 final files: 111 with alpha (`yuva420p`/`argb`), 9 without alpha (`yuv420p`). No missing or zero-byte catalog files. |
 | Hotspot alignment, day 6 | Cropped each measured rectangle from `taller_A` and `taller_B` with `ffmpeg`, reviewed side by side | The seven regions contain the intended change in both images. |
 | Hotspot alignment, day 19 | Cropped each measured rectangle from `escena_objetos` | The six regions contain the gift, bell, candy cane, Santa hat, blue bauble and star. |
@@ -59,15 +61,13 @@ The day 2 memory pairs are not provisional: they reuse existing final Rodolfo, s
 
 ## Unused final files
 
-These five files are present in `public/assets/final/` but not referenced by the current child flow. They are optional UI or physical-print material, not missing dependencies.
+The background town/workshop images are now rendered: the child calendar uses the town pair and the mission surfaces use the workshop pair, each with a wide and a portrait variant. The ornate frames are rendered as full-strength banners instead of near-invisible background layers. These five remaining files are optional UI or physical-print material, not missing dependencies:
 
 - `00_comunes/interfaz/boton_rojo.webp`
 - `00_comunes/interfaz/boton_verde.webp`
 - `00_comunes/interfaz/cartel_madera.webp`
 - `25_despedida_fisica/plantilla_carta.webp`
 - `25_despedida_fisica/plantilla_diploma.webp`
-
-The background city/workshop images are cataloged but not rendered by the current surfaces; they are available for future layouts without changing the catalog.
 
 ## Limits of this verification
 
