@@ -1,12 +1,12 @@
 /**
  * Day 22 secret elf language rules.
  *
- * The approved alphabet has exactly thirteen symbols. The same associations are
+ * The approved alphabet has exactly fourteen symbols. The same associations are
  * reused on day 24, so this module is the single source of truth for the table.
  *
  * Approved symbols in specification order:
  * tree=A, bell=E, gift=I, snowman=O, reindeer=U, star=M, mitten=G, sleigh=L,
- * snowflake=N, candy=S, candle=T, sock=R and sparkle=Z.
+ * snowflake=N, candy=S, candle=T, sock=R, sparkle=Z and mistletoe=Y.
  *
  * The child deciphers RENO, MAGIA and REGALO with the built-in keyboard. A
  * wrong answer is only feedback: no timer, penalty or attempt limit.
@@ -26,6 +26,7 @@ export type CipherSymbolId =
   | 'candle'
   | 'sock'
   | 'sparkle'
+  | 'mistletoe'
 
 export interface CipherSymbol {
   readonly id: CipherSymbolId
@@ -51,6 +52,7 @@ export const CIPHER_SYMBOL_NAMES: Readonly<Record<CipherSymbolId, string>> = {
   candle: 'Vela',
   sock: 'Calcetín',
   sparkle: 'Destello',
+  mistletoe: 'Muérdago',
 }
 
 export const CIPHER_ALPHABET: readonly CipherSymbol[] = [
@@ -67,6 +69,7 @@ export const CIPHER_ALPHABET: readonly CipherSymbol[] = [
   { id: 'candle', letter: 'T' },
   { id: 'sock', letter: 'R' },
   { id: 'sparkle', letter: 'Z' },
+  { id: 'mistletoe', letter: 'Y' },
 ]
 
 export const CIPHER_SYMBOL_COUNT = CIPHER_ALPHABET.length

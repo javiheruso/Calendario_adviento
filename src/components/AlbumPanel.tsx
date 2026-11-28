@@ -341,6 +341,14 @@ export function AlbumPanel({ store, cameraEnabled, onBack, onLock }: AlbumPanelP
 
       <header>
         <p className="adult__eyebrow">Zona de adultos</p>
+        <figure className="album-hero">
+          <AssetGlyph
+            asset={getAsset('album.book')}
+            label={false}
+            className="album-hero__image"
+            priority
+          />
+        </figure>
         <h2 id="album-title" tabIndex={-1}>
           Álbum privado
         </h2>

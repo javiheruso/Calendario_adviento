@@ -202,6 +202,7 @@ h2:focus-visible {
 /* Calendar */
 
 .calendar {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -255,6 +256,7 @@ h2:focus-visible {
   width: 100%;
   min-height: 5rem;
   padding: 0.45rem 0.25rem 0.55rem;
+  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 0.9rem;
   background: var(--bg-elevated);
@@ -397,8 +399,7 @@ h2:focus-visible {
   justify-content: center;
   aspect-ratio: 1;
   font-size: clamp(1rem, 4vw, 1.35rem);
-  filter: grayscale(1);
-  opacity: 0.28;
+  opacity: 0.55;
 }
 
 .star--earned {
@@ -1104,7 +1105,7 @@ h2:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  aspect-ratio: 1;
+  aspect-ratio: 3 / 2;
   border-radius: 0.5rem;
   background-color: var(--bg-soft);
   background-repeat: no-repeat;
@@ -1363,11 +1364,11 @@ h2:focus-visible {
   --scene-icon: clamp(1.1rem, 5.5vw, 2.2rem);
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 3 / 4;
   overflow: hidden;
   border: 1px solid var(--border-strong);
   border-radius: 0.9rem;
-  background: radial-gradient(circle at 50% 20%, #28456f, #101a2e 72%);
+  background: #101a2e;
   cursor: crosshair;
   touch-action: manipulation;
 }
@@ -1775,14 +1776,11 @@ h2:focus-visible {
   --hidden-icon: clamp(1.4rem, 7vw, 2.4rem);
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1672 / 941;
   overflow: hidden;
   border: 1px solid var(--border-strong);
   border-radius: 0.9rem;
-  background:
-    radial-gradient(circle at 18% 24%, rgb(255 209 102 / 0.08), transparent 42%),
-    radial-gradient(circle at 82% 72%, rgb(79 143 224 / 0.12), transparent 46%),
-    linear-gradient(160deg, #243a5e, #111c2e);
+  background: #101a2e;
   touch-action: manipulation;
 }
 
@@ -3689,6 +3687,658 @@ h2:focus-visible {
 
 .audio-settings__volume small {
   font-variant-numeric: tabular-nums;
+}
+
+/* Final artwork integration */
+
+:where(img.asset-glyph) {
+  width: 1em;
+  height: 1em;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.asset-glyph {
+  line-height: 1;
+}
+
+/* Header logo */
+.app__logo {
+  margin: 0;
+}
+
+.app__logo-image {
+  display: block;
+  width: min(100%, 28rem);
+  height: auto;
+  max-height: 10rem;
+  object-fit: contain;
+}
+
+/* Calendar frame, doors and star tree */
+.calendar__frame {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 1rem;
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+.calendar > *:not(.calendar__frame) {
+  position: relative;
+  z-index: 1;
+}
+
+.door__art {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.door__art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.door > .door__number,
+.door > .door__icon,
+.door > .door__state {
+  position: relative;
+  z-index: 1;
+}
+
+.door--locked .door__art {
+  opacity: 0.12;
+}
+
+.door--available .door__art,
+.door--mission-complete .door__art,
+.door--gift-found .door__art {
+  opacity: 0.26;
+}
+
+.door__number,
+.door__icon,
+.door__state {
+  text-shadow: 0 1px 4px rgb(0 0 0 / 0.9);
+}
+
+.door__icon img {
+  width: 1.2em;
+  height: 1.2em;
+}
+
+.star > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.star__image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Mission frame, narrative character and album book */
+.mission {
+  position: relative;
+}
+
+.mission__frame {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 1.1rem;
+  opacity: 0.07;
+  pointer-events: none;
+}
+
+.mission > *:not(.mission__frame) {
+  position: relative;
+  z-index: 1;
+}
+
+.mission__narrative-row {
+  display: flex;
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+
+.mission__narrative-art {
+  flex: 0 0 auto;
+  width: clamp(3.4rem, 14vw, 5.2rem);
+  height: auto;
+  max-height: 9rem;
+  object-fit: contain;
+}
+
+.album-hero {
+  margin: 0;
+}
+
+.album-hero__image {
+  display: block;
+  width: min(100%, 14rem);
+  height: auto;
+  object-fit: contain;
+}
+
+/* Memory */
+.memory-card > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.memory-card img {
+  width: 84%;
+  height: 84%;
+  object-fit: contain;
+}
+
+/* Word scramble wooden board */
+.scramble-board {
+  position: relative;
+  padding: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+}
+
+.scramble-board__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.34;
+  pointer-events: none;
+}
+
+.scramble-board .scramble-slots {
+  position: relative;
+  z-index: 1;
+}
+
+/* Jigsaw keeps the real 3:2 portrait without stretching */
+.jigsaw-board {
+  width: min(100%, 26rem);
+}
+
+/* Bell Simon support and final bell artwork */
+.simon-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.simon-stage__stand {
+  width: min(100%, 24rem);
+  height: auto;
+  margin-bottom: -1.4rem;
+  opacity: 0.55;
+  object-fit: contain;
+}
+
+.simon-stage .simon-bells {
+  position: relative;
+  z-index: 1;
+}
+
+.simon-bell__glyph img {
+  width: 1.5em;
+  height: 1.5em;
+  object-fit: contain;
+}
+
+/* Reindeer walk cycle */
+.maze-cell__glyph img {
+  width: 1.6em;
+  height: 1.6em;
+  object-fit: contain;
+}
+
+.maze-cell__glyph--reindeer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.maze-cell__glyph--reindeer img {
+  width: 1.8em;
+  height: 1.8em;
+  object-fit: contain;
+}
+
+.maze-cell__glyph--flip {
+  transform: scaleX(-1);
+}
+
+/* Spot the difference scenes */
+.spot-scene__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* Pattern conveyor belt */
+.pattern-strip {
+  position: relative;
+  overflow: hidden;
+}
+
+.pattern-strip__belt {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.pattern-strip > *:not(.pattern-strip__belt) {
+  position: relative;
+  z-index: 1;
+}
+
+.pattern-chip img {
+  width: 1.35em;
+  height: 1.35em;
+  object-fit: contain;
+}
+
+/* Gift rain */
+.catch-gift img {
+  width: 1.55em;
+  height: 1.55em;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.45));
+}
+
+.catch-basket img {
+  width: 1.45em;
+  height: 1.45em;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 5px rgb(0 0 0 / 0.45));
+}
+
+/* Maths chest */
+.math-chest {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+}
+
+.math-chest__image {
+  width: min(60%, 14rem);
+  height: auto;
+  max-height: 10rem;
+  object-fit: contain;
+}
+
+.math-table__symbol img,
+.math-expression__symbol img {
+  width: 1.5em;
+  height: 1.5em;
+  object-fit: contain;
+}
+
+/* Hidden-object final scene */
+.hidden-hint-character {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.hidden-hint-character__image {
+  flex: 0 0 auto;
+  width: 2.6rem;
+  height: auto;
+  object-fit: contain;
+}
+
+.hidden-scene__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.hidden-object img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hidden-check img {
+  width: 1.2em;
+  height: 1.2em;
+}
+
+/* Snowman phases and options */
+.snowman-model {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.snowman-model__image {
+  width: min(100%, 16rem);
+  height: auto;
+  max-height: 16rem;
+  object-fit: contain;
+}
+
+.snowman-model__caption {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.snowman-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.7rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: 0.9rem;
+  background: var(--bg-soft);
+}
+
+.snowman-gallery__title {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.snowman-gallery__list {
+  display: flex;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  list-style: none;
+}
+
+.snowman-gallery__list li {
+  flex: 0 0 auto;
+  width: 5.5rem;
+}
+
+.snowman-gallery__image {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.snowman-step {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.9rem;
+  border: 1px solid var(--accent-strong);
+  border-radius: 0.9rem;
+  background: var(--bg-soft);
+}
+
+.snowman-step h3 {
+  margin: 0;
+}
+
+.snowman-option__glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 4.4rem;
+}
+
+.snowman-option__image {
+  width: min(100%, 4.4rem);
+  height: auto;
+  max-height: 4.4rem;
+  object-fit: contain;
+}
+
+/* Cipher parchment and symbol artwork */
+.cipher-reference {
+  position: relative;
+  overflow: hidden;
+}
+
+.cipher-reference__parchment {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.16;
+  pointer-events: none;
+}
+
+.cipher-reference > *:not(.cipher-reference__parchment) {
+  position: relative;
+  z-index: 1;
+}
+
+.cipher-symbol img {
+  width: 1.6em;
+  height: 1.6em;
+  object-fit: contain;
+}
+
+.cipher-word__symbol img {
+  width: 1.7em;
+  height: 1.7em;
+  object-fit: contain;
+}
+
+/* Karaoke stage and singer */
+.karaoke-hero {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: #101a2e;
+}
+
+.karaoke-hero__stage {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.karaoke-hero__mic,
+.karaoke-hero__trasto {
+  position: absolute;
+  bottom: 4%;
+  pointer-events: none;
+}
+
+.karaoke-hero__mic {
+  right: 8%;
+  width: 13%;
+}
+
+.karaoke-hero__trasto {
+  left: 5%;
+  width: 22%;
+}
+
+.karaoke-hero__mic img,
+.karaoke-hero__trasto img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 5px rgb(0 0 0 / 0.5));
+}
+
+.karaoke-hero__caption {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 1.6rem 0.8rem 0.6rem;
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.78));
+  color: #fff;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.karaoke-style__trasto {
+  flex: 0 0 auto;
+  width: 2.8rem;
+}
+
+.karaoke-style__trasto img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Mystery bag */
+.touch-bag-stage__glyph {
+  width: min(100%, 10rem);
+}
+
+.touch-bag-stage__image {
+  width: 100%;
+  height: auto;
+  max-height: 9rem;
+  object-fit: contain;
+}
+
+/* Charades animal cards */
+.charades-card__glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 14rem);
+  min-height: 8rem;
+}
+
+.charades-card__glyph img {
+  width: 100%;
+  height: auto;
+  max-height: 14rem;
+  object-fit: contain;
+}
+
+/* Surprise for Trasto */
+.craft-option__glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+}
+
+.craft-option__glyph img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.craft-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.craft-selection__glyph {
+  width: 4.5rem;
+}
+
+.craft-selection__image {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.craft-farewell__glyph {
+  width: 5rem;
+}
+
+.craft-farewell__image {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Final crystals and sleigh */
+.finale-crystal__glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.2rem;
+  height: 3.2rem;
+}
+
+.finale-crystal__image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.finale-sleigh {
+  position: relative;
+  width: min(100%, 28rem);
+  aspect-ratio: 2 / 1;
+}
+
+.finale-sleigh__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: opacity 0.8s ease;
+}
+
+.finale-sleigh__image--flying {
+  opacity: 0;
+}
+
+.finale-sleigh--flying .finale-sleigh__image--prepared {
+  opacity: 0;
+}
+
+.finale-sleigh--flying .finale-sleigh__image--flying {
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {

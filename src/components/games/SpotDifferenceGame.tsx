@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type MouseEvent } from 'react'
-import { getAsset, type AssetId } from '../../domain/assets'
+import { getAsset } from '../../domain/assets'
 import {
   SPOT_DIFFERENCES,
   SPOT_DIFFERENCE_COUNT,
@@ -17,46 +17,14 @@ import {
 import { AssetGlyph } from '../AssetGlyph'
 import type { MissionGameProps } from './types'
 
-interface SceneItem {
-  readonly key: string
-  readonly asset: AssetId
-  readonly x: number
-  readonly y: number
-  readonly scale: number
-}
-
-const BASE_ITEMS: readonly SceneItem[] = [
-  { key: 'tree', asset: 'ui.tree', x: 16, y: 46, scale: 3.4 },
-  { key: 'elf', asset: 'brand.trasto', x: 46, y: 54, scale: 2.6 },
-  { key: 'star', asset: 'ui.star', x: 50, y: 12, scale: 1.4 },
-  { key: 'bell', asset: 'game.simon.bell', x: 34, y: 14, scale: 1.1 },
-  { key: 'snowman', asset: 'game.memory.snowman', x: 24, y: 74, scale: 2.2 },
-  { key: 'gift', asset: 'ui.gift', x: 55, y: 79, scale: 1.8 },
-  { key: 'snow-a', asset: 'game.word.snow', x: 88, y: 82, scale: 1.1 },
-  { key: 'snow-b', asset: 'game.word.snow', x: 7, y: 11, scale: 1.1 },
-]
-
-const LEFT_ITEMS: readonly SceneItem[] = [
-  ...BASE_ITEMS,
-  { key: 'bauble', asset: 'game.spot.bauble.red', x: 18, y: 30, scale: 1.3 },
-  { key: 'extra-gift', asset: 'ui.gift', x: 79, y: 21, scale: 1.5 },
-  { key: 'clock', asset: 'game.spot.clock.one', x: 75, y: 49, scale: 1.5 },
-  { key: 'hat', asset: 'game.spot.hat', x: 23, y: 63, scale: 1.2 },
-]
-
-const RIGHT_ITEMS: readonly SceneItem[] = [
-  ...BASE_ITEMS,
-  { key: 'bauble', asset: 'game.spot.bauble.blue', x: 18, y: 30, scale: 1.3 },
-  { key: 'clock', asset: 'game.spot.clock.three', x: 75, y: 49, scale: 1.5 },
-  { key: 'carrot', asset: 'game.spot.carrot', x: 79, y: 74, scale: 1.5 },
-]
-
 const ZONE_LABELS: Readonly<Record<SpotZone, string>> = {
   'top-left': 'la parte de arriba a la izquierda',
-  'top-right': 'la parte de arriba a la derecha',
+  'upper-left': 'la zona alta de la izquierda',
+  'middle-left': 'la zona central de la izquierda',
+  center: 'la zona central',
   'middle-right': 'la zona central de la derecha',
-  'bottom-left': 'la parte de abajo a la izquierda',
   'bottom-right': 'la parte de abajo a la derecha',
+  'bottom-center': 'la parte de abajo, en el centro',
 }
 
 const MISS_MESSAGE = 'Ese trozo no ha cambiado. Sin prisa: mira otra vez y sigue probando.'
@@ -74,7 +42,7 @@ function percentStyle(x: number, y: number, width: number, height: number): CSSP
 
 interface ScenePanelProps {
   readonly title: string
-  readonly items: readonly SceneItem[]
+  readonly sceneAssetId: 'game.spot.scene.a' | 'game.spot.scene.b'
   readonly found: readonly SpotDifferenceId[]
   readonly hintSpot: DifferenceSpot | null
   readonly disabled: boolean
@@ -84,7 +52,7 @@ interface ScenePanelProps {
 
 function ScenePanel({
   title,
-  items,
+  sceneAssetId,
   found,
   hintSpot,
   disabled,
@@ -108,20 +76,12 @@ function ScenePanel({
         role="group"
         aria-label={`${title}: ilustración para buscar diferencias`}
       >
-        {items.map((item) => (
-          <span
-            key={item.key}
-            className="spot-scene__item"
-            style={{
-              left: `${item.x}%`,
-              top: `${item.y}%`,
-              fontSize: `calc(var(--scene-icon) * ${item.scale})`,
-            }}
-            aria-hidden="true"
-          >
-            <AssetGlyph asset={getAsset(item.asset)} label={false} />
-          </span>
-        ))}
+        <AssetGlyph
+          asset={getAsset(sceneAssetId)}
+          label={false}
+          className="spot-scene__image"
+          priority
+        />
 
         {hintSpot ? (
           <span
@@ -167,9 +127,10 @@ function ScenePanel({
 }
 
 /**
- * Day 6: find the five approved changes. Both illustrations are markable, the
- * zone hint points at a region without revealing the exact spot, and a single
- * image view is available for small screens.
+ * Day 6: find the seven approved changes in the final workshop illustrations.
+ * Both pictures are markable, the zone hint points at a region without
+ * revealing the exact spot, and a single-image view is available for small
+ * screens.
  */
 export function SpotDifferenceGame({ onComplete }: MissionGameProps) {
   const [state, setState] = useState<SpotDifferenceState>(() =>
@@ -225,7 +186,7 @@ export function SpotDifferenceGame({ onComplete }: MissionGameProps) {
   const leftPanel = (
     <ScenePanel
       title="Taller A"
-      items={LEFT_ITEMS}
+      sceneAssetId="game.spot.scene.a"
       found={state.found}
       hintSpot={hintSpot}
       disabled={complete}
@@ -236,7 +197,7 @@ export function SpotDifferenceGame({ onComplete }: MissionGameProps) {
   const rightPanel = (
     <ScenePanel
       title="Taller B"
-      items={RIGHT_ITEMS}
+      sceneAssetId="game.spot.scene.b"
       found={state.found}
       hintSpot={hintSpot}
       disabled={complete}
@@ -248,7 +209,7 @@ export function SpotDifferenceGame({ onComplete }: MissionGameProps) {
   return (
     <div className="game game--spot">
       <p className="game__lead">
-        Los dos talleres parecen iguales, pero esconden cinco cambios. Toca la
+        Los dos talleres parecen iguales, pero esconden siete cambios. Toca la
         diferencia en cualquiera de las dos imágenes: quedará marcada en ambas. Si te
         atascas, pide una pista de zona.
       </p>
@@ -316,7 +277,7 @@ export function SpotDifferenceGame({ onComplete }: MissionGameProps) {
       {complete ? (
         <div className="game__complete" role="status">
           <p>
-            <strong>¡Has encontrado las cinco diferencias!</strong>
+            <strong>¡Has encontrado las siete diferencias!</strong>
           </p>
           <button type="button" className="button button--primary" onClick={onComplete}>
             Continuar

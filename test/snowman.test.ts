@@ -2,115 +2,125 @@ import { test } from 'node:test'
 import { strict as assert } from 'node:assert'
 import {
   SNOWMAN_CATEGORIES,
+  SNOWMAN_FIXED_TARGET,
   SNOWMAN_OBSERVE_MS,
   SNOWMAN_OBSERVE_SECONDS,
+  SNOWMAN_PHASES,
+  SNOWMAN_PHASE_COUNT,
   SNOWMAN_VARIANTS_PER_CATEGORY,
-  clearSnowmanSelection,
+  chooseSnowmanOption,
+  completedSnowmanPhases,
   createSnowmanState,
-  createSnowmanTarget,
+  currentSnowmanPhase,
   isSnowmanComplete,
-  isSnowmanSelectionComplete,
-  matchingSnowmanCategories,
-  selectSnowmanVariant,
-  selectedSnowmanCategories,
   startSnowmanBuilding,
   type SnowmanState,
 } from '../src/domain/games/snowman'
-import { sequenceRandom } from './random'
 
-function selectCombination(
-  state: SnowmanState,
-  combination: SnowmanState['target'],
-): SnowmanState {
-  let current = state
-
-  for (const category of SNOWMAN_CATEGORIES) {
-    current = selectSnowmanVariant(current, category, combination[category])
-  }
-
-  return current
+function solvePhase(state: SnowmanState): SnowmanState {
+  const phase = currentSnowmanPhase(state)
+  assert.ok(phase)
+  return chooseSnowmanOption(state, phase.correctOptionId)
 }
 
-test('there are three variants per category and a fifteen-second observation', () => {
+test('the fixed model has four consecutive phases and three options each', () => {
   assert.equal(SNOWMAN_CATEGORIES.length, 4)
   assert.equal(SNOWMAN_VARIANTS_PER_CATEGORY, 3)
   assert.equal(SNOWMAN_OBSERVE_SECONDS, 15)
   assert.equal(SNOWMAN_OBSERVE_MS, 15_000)
-})
+  assert.equal(SNOWMAN_PHASE_COUNT, 4)
+  assert.equal(SNOWMAN_PHASES.length, 4)
 
-test('the random target uses one valid variant per category', () => {
-  const target = createSnowmanTarget(sequenceRandom([0.1, 0.4, 0.8, 0.99]))
+  assert.deepEqual(
+    SNOWMAN_PHASES.map((phase) => phase.category),
+    ['hat', 'nose', 'scarf', 'buttons'],
+  )
+  assert.deepEqual(
+    SNOWMAN_PHASES.map((phase) => phase.correctOptionId),
+    ['top', 'carrot', 'red', 'coal'],
+  )
+  assert.deepEqual(SNOWMAN_FIXED_TARGET, {
+    hat: 'top',
+    nose: 'carrot',
+    scarf: 'red',
+    buttons: 'coal',
+  })
 
-  assert.deepEqual(target, { hat: 0, scarf: 1, nose: 2, buttons: 2 })
-
-  for (const category of SNOWMAN_CATEGORIES) {
-    const value: number = target[category]
-    assert.ok(Number.isInteger(value))
-    assert.ok(value >= 0 && value < SNOWMAN_VARIANTS_PER_CATEGORY)
+  for (const phase of SNOWMAN_PHASES) {
+    assert.equal(phase.options.length, 3, phase.category)
+    assert.equal(
+      new Set(phase.options.map((option) => option.id)).size,
+      3,
+      phase.category,
+    )
+    assert.ok(
+      phase.options.some((option) => option.id === phase.correctOptionId),
+      phase.category,
+    )
   }
 })
 
 test('the game starts observing and only accepts choices while building', () => {
-  const initial = createSnowmanState(sequenceRandom([0.1, 0.4, 0.8, 0.99]))
+  const initial = createSnowmanState()
 
-  assert.equal(initial.phase, 'observing')
-  assert.equal(selectedSnowmanCategories(initial), 0)
-  assert.equal(selectSnowmanVariant(initial, 'hat', 0), initial)
+  assert.equal(initial.stage, 'observing')
+  assert.equal(completedSnowmanPhases(initial), 0)
+  assert.equal(currentSnowmanPhase(initial), null)
+  assert.equal(chooseSnowmanOption(initial, 'top'), initial)
 
   const building = startSnowmanBuilding(initial)
-  assert.equal(building.phase, 'building')
+  assert.equal(building.stage, 'building')
   assert.equal(startSnowmanBuilding(building), building, 'building is not restarted')
+  assert.equal(currentSnowmanPhase(building)?.category, 'hat')
 })
 
-test('invalid variants are ignored and the selection can be cleared', () => {
-  const state = startSnowmanBuilding(
-    createSnowmanState(sequenceRandom([0.1, 0.4, 0.8, 0.99])),
-  )
+test('a wrong choice is kind feedback and keeps the same phase open', () => {
+  const building = startSnowmanBuilding(createSnowmanState())
+  const wrong = chooseSnowmanOption(building, 'santa')
 
-  assert.equal(selectSnowmanVariant(state, 'hat', -1), state)
-  assert.equal(selectSnowmanVariant(state, 'hat', 3), state)
-  assert.equal(selectSnowmanVariant(state, 'hat', 1.5), state)
+  assert.equal(wrong.stage, 'building')
+  assert.equal(wrong.step, 0)
+  assert.equal(wrong.lastResult, 'wrong')
+  assert.equal(wrong.attempts, 1)
+  assert.equal(isSnowmanComplete(wrong), false)
 
-  const withHat = selectSnowmanVariant(state, 'hat', 2)
-  assert.equal(withHat.selection.hat, 2)
-  assert.equal(selectedSnowmanCategories(withHat), 1)
-
-  const cleared = clearSnowmanSelection(withHat)
-  assert.equal(cleared.selection.hat, null)
-  assert.equal(selectedSnowmanCategories(cleared), 0)
+  const repeated = chooseSnowmanOption(wrong, 'green')
+  assert.equal(repeated.step, 0)
+  assert.equal(repeated.attempts, 2)
 })
 
-test('a wrong full combination is feedback only and can be retried', () => {
-  let state = startSnowmanBuilding(
-    createSnowmanState(sequenceRandom([0.1, 0.4, 0.8, 0.99])),
-  )
-  const target = state.target
-  const wrong = {
-    hat: (target.hat + 1) % SNOWMAN_VARIANTS_PER_CATEGORY,
-    scarf: (target.scarf + 1) % SNOWMAN_VARIANTS_PER_CATEGORY,
-    nose: (target.nose + 1) % SNOWMAN_VARIANTS_PER_CATEGORY,
-    buttons: (target.buttons + 1) % SNOWMAN_VARIANTS_PER_CATEGORY,
+test('unknown options are ignored without changing the state', () => {
+  const building = startSnowmanBuilding(createSnowmanState())
+  assert.equal(chooseSnowmanOption(building, 'not-an-option'), building)
+})
+
+test('correct choices advance through the four complete phases in order', () => {
+  let state = startSnowmanBuilding(createSnowmanState())
+
+  for (let step = 0; step < SNOWMAN_PHASE_COUNT; step += 1) {
+    assert.equal(state.step, step)
+    assert.equal(completedSnowmanPhases(state), step)
+    assert.equal(isSnowmanComplete(state), false)
+
+    state = solvePhase(state)
+    assert.equal(state.lastResult, 'correct')
+    assert.equal(state.step, step + 1)
   }
 
-  state = selectCombination(state, wrong)
-  assert.equal(isSnowmanSelectionComplete(state), true)
-  assert.equal(isSnowmanComplete(state), false)
-  assert.equal(matchingSnowmanCategories(state), 0)
-  assert.equal(state.phase, 'building')
-
-  state = selectCombination(state, target)
   assert.equal(isSnowmanComplete(state), true)
-  assert.equal(state.phase, 'complete')
+  assert.equal(completedSnowmanPhases(state), SNOWMAN_PHASE_COUNT)
+  assert.equal(currentSnowmanPhase(state), null)
+  assert.equal(chooseSnowmanOption(state, 'top'), state)
 })
 
-test('the mission completes as soon as the full target is rebuilt', () => {
-  const building = startSnowmanBuilding(
-    createSnowmanState(sequenceRandom([0.1, 0.4, 0.8, 0.99])),
-  )
-  const completed = selectCombination(building, building.target)
+test('the mission completes only after the last phase', () => {
+  let state = startSnowmanBuilding(createSnowmanState())
 
-  assert.equal(isSnowmanComplete(completed), true)
-  assert.equal(matchingSnowmanCategories(completed), 4)
-  assert.equal(selectSnowmanVariant(completed, 'hat', 0), completed)
-  assert.equal(clearSnowmanSelection(completed), completed)
+  for (let step = 0; step < SNOWMAN_PHASE_COUNT - 1; step += 1) {
+    state = solvePhase(state)
+    assert.equal(isSnowmanComplete(state), false)
+  }
+
+  state = solvePhase(state)
+  assert.equal(isSnowmanComplete(state), true)
 })

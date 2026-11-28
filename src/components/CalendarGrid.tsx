@@ -54,6 +54,11 @@ export function CalendarGrid({
 
   return (
     <section className="calendar" aria-labelledby="calendar-title">
+      <AssetGlyph
+        asset={getAsset('ui.frame.calendar')}
+        label={false}
+        className="calendar__frame"
+      />
       <h2 id="calendar-title" tabIndex={-1}>
         Las 24 puertas
       </h2>
@@ -85,6 +90,12 @@ export function CalendarGrid({
                 aria-label={label}
                 onClick={() => onOpenDay(day)}
               >
+                <span className="door__art" aria-hidden="true">
+                  <AssetGlyph
+                    asset={getAsset(locked ? 'ui.door.closed' : 'ui.door.open')}
+                    label={false}
+                  />
+                </span>
                 {isToday ? (
                   <span className="door__today" aria-hidden="true">
                     Hoy

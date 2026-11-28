@@ -1,8 +1,10 @@
-import { useState } from 'react'
-import { getAsset } from '../../domain/assets'
+import { useEffect, useState } from 'react'
+import { getAsset, type AssetId } from '../../domain/assets'
 import {
   REINDEER_CARROT_COUNT,
   REINDEER_MAZE,
+  REINDEER_WALK_FRAME_MS,
+  REINDEER_WALK_STOP_MS,
   carrotsRemaining,
   createReindeerMazeState,
   isAtStable,
@@ -42,16 +44,59 @@ function cellKey(cell: MazeCell): string {
  * Day 4: guide Rodolfo through a snowy forest, collect three carrots and reach
  * the stable. Movement is available by tapping a neighbouring cell or with four
  * large direction buttons; there is no timer or penalty.
+ *
+ * The final Rodolfo artwork is animated only while he actually moves: two walk
+ * frames alternate every 175 ms, and he faces left when the last horizontal
+ * step went left. Blocked steps are ignored before the animation starts, so an
+ * invalid move never changes the rules or the pose.
  */
 export function ReindeerMazeGame({ onComplete }: MissionGameProps) {
   const [state, setState] = useState(() => createReindeerMazeState())
+  // The final Rodolfo artwork faces left. The horizontal mirror is applied on
+  // rightward steps so he always looks in the direction of travel; moving left
+  // keeps the source orientation.
+  const [facing, setFacing] = useState<'left' | 'right'>('left')
+  const [walkId, setWalkId] = useState(0)
+  const [walkFrame, setWalkFrame] = useState(0)
   const complete = isReindeerMazeComplete(state)
   const atStable = isAtStable(state)
   const remaining = carrotsRemaining(state)
   const maze = REINDEER_MAZE
+  const walking = walkId > 0
+
+  useEffect(() => {
+    if (walkId === 0) {
+      return
+    }
+
+    const interval = window.setInterval(() => {
+      setWalkFrame((frame) => (frame === 0 ? 1 : 0))
+    }, REINDEER_WALK_FRAME_MS)
+    const stop = window.setTimeout(() => setWalkId(0), REINDEER_WALK_STOP_MS)
+
+    return () => {
+      window.clearInterval(interval)
+      window.clearTimeout(stop)
+    }
+  }, [walkId])
 
   function move(direction: MazeDirection) {
-    setState((current) => moveReindeer(current, direction))
+    const next = moveReindeer(state, direction)
+
+    if (next === state) {
+      return
+    }
+
+    setState(next)
+
+    if (direction === 'left') {
+      setFacing('left')
+    } else if (direction === 'right') {
+      setFacing('right')
+    }
+
+    setWalkFrame((frame) => (frame === 0 ? 1 : 0))
+    setWalkId((id) => id + 1)
   }
 
   function tapCell(cell: MazeCell) {
@@ -61,6 +106,12 @@ export function ReindeerMazeGame({ onComplete }: MissionGameProps) {
       move(direction)
     }
   }
+
+  const reindeerAsset: AssetId = walking
+    ? walkFrame === 0
+      ? 'game.reindeer.walk.a'
+      : 'game.reindeer.walk.b'
+    : 'game.maze.reindeer'
 
   return (
     <div className="game game--maze">
@@ -111,8 +162,13 @@ export function ReindeerMazeGame({ onComplete }: MissionGameProps) {
                 aria-label={`${label}${reindeer ? ', con Rodolfo' : ''}`}
               >
                 {reindeer ? (
-                  <span className="maze-cell__glyph" aria-hidden="true">
-                    <AssetGlyph asset={getAsset('game.maze.reindeer')} label={false} />
+                  <span
+                    className={`maze-cell__glyph maze-cell__glyph--reindeer${
+                      facing === 'right' ? ' maze-cell__glyph--flip' : ''
+                    }`}
+                    aria-hidden="true"
+                  >
+                    <AssetGlyph asset={getAsset(reindeerAsset)} label={false} priority />
                   </span>
                 ) : wall ? (
                   <span className="maze-cell__glyph" aria-hidden="true">

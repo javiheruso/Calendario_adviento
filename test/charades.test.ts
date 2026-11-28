@@ -12,9 +12,26 @@ import {
 } from '../src/domain/games/charades'
 import { sequenceRandom } from './random'
 
-test('the animal bank has twelve options and the game draws three', () => {
+test('the animal bank is the exact approved list of twelve', () => {
   const state = createCharadesState(sequenceRandom([0.1, 0.3, 0.5, 0.7, 0.9]))
 
+  assert.deepEqual(
+    CHARADE_ANIMALS.map((animal) => animal.id),
+    [
+      'elephant',
+      'cat',
+      'dog',
+      'lion',
+      'monkey',
+      'penguin',
+      'rabbit',
+      'hen',
+      'gorilla',
+      'duck',
+      'frog',
+      'reindeer',
+    ],
+  )
   assert.equal(CHARADE_ANIMALS.length, 12)
   assert.equal(CHARADES_ANIMAL_BANK_SIZE, 12)
   assert.equal(CHARADES_ROUNDS, 3)

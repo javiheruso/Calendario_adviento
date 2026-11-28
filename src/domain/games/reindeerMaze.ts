@@ -60,6 +60,11 @@ export const REINDEER_MAZE: ReindeerMazeDefinition = {
 
 export const REINDEER_CARROT_COUNT = REINDEER_MAZE.carrots.length
 
+/** Approved walk cycle: two frames alternate inside the 150–200 ms window. */
+export const REINDEER_WALK_FRAME_MS = 175
+/** How long the walk pose stays visible after the last valid step. */
+export const REINDEER_WALK_STOP_MS = 420
+
 const DELTAS: Readonly<Record<MazeDirection, MazeCell>> = {
   up: { row: -1, col: 0 },
   down: { row: 1, col: 0 },

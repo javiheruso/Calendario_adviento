@@ -36,7 +36,11 @@ export function StarTree({ progress, pendingReleasedDays }: StarTreeProps) {
               aria-label={`Día ${day}: ${earned ? 'estrella conseguida' : 'sin estrella'}`}
             >
               <span aria-hidden="true">
-                <AssetGlyph asset={getAsset('ui.star')} label={false} />
+                <AssetGlyph
+                  asset={getAsset(earned ? 'ui.star' : 'ui.star.off')}
+                  label={false}
+                  className="star__image"
+                />
               </span>
             </li>
           )

@@ -27,3 +27,7 @@ test/.build
 *.njsproj
 *.sln
 *.sw?
+
+# Source artwork archive (never part of the app build)
+recursos/
+*.zip

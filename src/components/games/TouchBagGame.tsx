@@ -46,7 +46,12 @@ export function TouchBagGame({ onComplete }: MissionGameProps) {
 
       <div className="touch-bag-stage">
         <p className="touch-bag-stage__glyph" aria-hidden="true">
-          <AssetGlyph asset={getAsset('game.touch.bag')} label={false} />
+          <AssetGlyph
+            asset={getAsset(complete ? 'game.touch.bag.open' : 'game.touch.bag')}
+            label={false}
+            className="touch-bag-stage__image"
+            priority
+          />
         </p>
         <p className="touch-bag-stage__hand" aria-hidden="true">
           <AssetGlyph asset={getAsset('game.touch.hand')} label={false} />

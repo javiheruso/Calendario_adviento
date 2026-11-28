@@ -23,41 +23,22 @@ interface ObjectMeta {
 }
 
 const OBJECT_META: Readonly<Record<HiddenObjectId, ObjectMeta>> = {
-  key: { asset: 'game.hidden.key', label: 'llave' },
-  sock: { asset: 'game.hidden.sock', label: 'calcetín' },
-  carrot: { asset: 'game.hidden.carrot', label: 'zanahoria' },
+  gift: { asset: 'game.hidden.gift', label: 'regalo' },
   bell: { asset: 'game.hidden.bell', label: 'campana' },
-  teddy: { asset: 'game.hidden.teddy', label: 'osito' },
-  candy: { asset: 'game.hidden.candy', label: 'caramelo' },
+  candyCane: { asset: 'game.hidden.candyCane', label: 'bastón de caramelo' },
+  santaHat: { asset: 'game.hidden.santaHat', label: 'gorro de Papá Noel' },
+  blueBauble: { asset: 'game.hidden.blueBauble', label: 'bola azul' },
+  star: { asset: 'game.hidden.star', label: 'estrella' },
 }
 
 const ZONE_LABELS: Readonly<Record<HiddenZone, string>> = {
-  'top-left': 'la parte de arriba a la izquierda',
+  'top-center': 'la parte de arriba, en el centro',
+  'top-staircase': 'la parte de arriba, junto a la escalera',
   'top-right': 'la parte de arriba a la derecha',
-  'middle-left': 'la zona central de la izquierda',
+  'middle-left': 'la estantería de la izquierda, a media altura',
   'middle-right': 'la zona central de la derecha',
-  'bottom-left': 'la parte de abajo a la izquierda',
   'bottom-center': 'la parte de abajo, en el centro',
 }
-
-interface Decoration {
-  readonly key: string
-  readonly asset: AssetId
-  readonly x: number
-  readonly y: number
-  readonly scale: number
-}
-
-const DECORATIONS: readonly Decoration[] = [
-  { key: 'tree', asset: 'ui.tree', x: 12, y: 40, scale: 3.1 },
-  { key: 'gift-a', asset: 'ui.gift', x: 38, y: 28, scale: 1.7 },
-  { key: 'star', asset: 'ui.star', x: 56, y: 12, scale: 1.2 },
-  { key: 'snow', asset: 'game.word.snow', x: 86, y: 8, scale: 1.1 },
-  { key: 'snowman', asset: 'game.memory.snowman', x: 44, y: 64, scale: 2.1 },
-  { key: 'gift-b', asset: 'ui.gift', x: 62, y: 42, scale: 1.4 },
-  { key: 'snow-b', asset: 'game.word.snow', x: 26, y: 88, scale: 1 },
-  { key: 'trasto', asset: 'brand.trasto', x: 91, y: 73, scale: 1.8 },
-]
 
 const ZOOM_MIN = 1
 const ZOOM_MAX = 2.5
@@ -84,9 +65,10 @@ function clampPan(value: number): number {
 }
 
 /**
- * Day 19: find the six approved objects in a workshop scene. The scene can be
- * zoomed and panned, the zone help highlights a region, and Trasto may appear as
- * an optional decoy that is not required. A wrong tap is only feedback.
+ * Day 19: find the six approved objects in the final workshop scene. The scene
+ * can be zoomed and panned, the zone help highlights a region, and a wrong tap
+ * is only feedback. The image itself is the only background; objects are
+ * invisible hit areas until found.
  */
 export function HiddenObjectsGame({ onComplete }: MissionGameProps) {
   const [state, setState] = useState<HiddenObjectsState>(() =>
@@ -153,10 +135,11 @@ export function HiddenObjectsGame({ onComplete }: MissionGameProps) {
   return (
     <div className="game game--hidden">
       <p className="game__lead">
-        El taller de Trasto está patas arriba. Busca la llave, el calcetín, la zanahoria,
-        la campana, el osito y el caramelo. No se ven a simple vista: toca o haz clic en
-        la escena donde creas que están. Puedes acercar la escena, moverla y pedir una
-        ayuda de zona. Trasto también se asoma, pero no hace falta encontrarlo. Si no
+        El taller de Trasto está patas arriba. Busca el regalo del centro, la campana
+        de la estantería izquierda, el bastón de caramelo que asoma tras la taza verde,
+        el gorro de Papá Noel de arriba, la bola azul de arriba a la derecha y la
+        estrella que brilla sobre la escalera. Toca o haz clic en la escena donde creas
+        que están. Puedes acercar la escena, moverla y pedir una ayuda de zona. Si no
         aciertas, no pasa nada: prueba otra vez.
       </p>
 
@@ -256,25 +239,28 @@ export function HiddenObjectsGame({ onComplete }: MissionGameProps) {
         </div>
       </div>
 
+      {hint ? (
+        <p className="hidden-hint-character">
+          <AssetGlyph
+            asset={getAsset('brand.trasto.points')}
+            label={false}
+            className="hidden-hint-character__image"
+          />
+          <span>Trasto señala la zona donde hay algo escondido.</span>
+        </p>
+      ) : null}
+
       <div className="hidden-scene" aria-label="Escena del taller con objetos ocultos">
         <div
           className="hidden-scene__canvas"
           style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
         >
-          {DECORATIONS.map((item) => (
-            <span
-              key={item.key}
-              className="hidden-scene__decoration"
-              style={{
-                left: `${item.x}%`,
-                top: `${item.y}%`,
-                fontSize: `calc(var(--hidden-icon) * ${item.scale})`,
-              }}
-              aria-hidden="true"
-            >
-              <AssetGlyph asset={getAsset(item.asset)} label={false} />
-            </span>
-          ))}
+          <AssetGlyph
+            asset={getAsset('game.hidden.scene')}
+            label={false}
+            className="hidden-scene__image"
+            priority
+          />
 
           {HIDDEN_OBJECTS.map((object) => {
             const isFound = state.found.includes(object.id)

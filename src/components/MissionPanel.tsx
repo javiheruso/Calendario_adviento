@@ -166,6 +166,11 @@ export function MissionPanel({
 
   return (
     <section className="mission" aria-labelledby="mission-title">
+      <AssetGlyph
+        asset={getAsset('ui.frame.general')}
+        label={false}
+        className="mission__frame"
+      />
       <button type="button" className="link-button" onClick={onBack}>
         <span aria-hidden="true">←</span> {backLabel}
       </button>
@@ -188,11 +193,19 @@ export function MissionPanel({
         </div>
       </header>
 
-      <p className="mission__narrative">
-        Trasto te ha preparado esta misión. Cuando la superes, te dará la pista para
-        encontrar el regalo escondido. Sin prisa y sin penalizaciones: puedes intentarlo
-        las veces que quieras.
-      </p>
+      <div className="mission__narrative-row">
+        <AssetGlyph
+          asset={getAsset('brand.trasto.explains')}
+          label={false}
+          className="mission__narrative-art"
+          priority
+        />
+        <p className="mission__narrative">
+          Trasto te ha preparado esta misión. Cuando la superes, te dará la pista para
+          encontrar el regalo escondido. Sin prisa y sin penalizaciones: puedes intentarlo
+          las veces que quieras.
+        </p>
+      </div>
 
       {repeating ? (
         <section className="mission__stage" aria-labelledby="mission-stage-title">

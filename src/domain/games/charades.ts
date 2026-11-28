@@ -1,10 +1,11 @@
 /**
  * Day 17 silent-elf charades rules.
  *
- * Three animals are drawn at random from a bank of twelve. Only the child who
- * acts may look at the current animal; the card is hidden by default and can be
- * shown or hidden again without any audio that would reveal the answer. Every
- * guessed animal is confirmed manually by the family, and no camera is used.
+ * Three animals are drawn at random from the approved bank of twelve. Only the
+ * child who acts may look at the current animal; the card is hidden by default
+ * and can be shown or hidden again without any audio that would reveal the
+ * answer. Every guessed animal is confirmed manually by the family, and no
+ * camera is used.
  */
 import { shuffle } from './shuffle'
 
@@ -17,21 +18,22 @@ export interface CharadeAnimal {
 }
 
 /**
- * Approved animal bank. Labels are the answer the actor must not say out loud.
+ * Exact approved animal bank and order. Labels are the answer the actor must
+ * not say out loud.
  */
 export const CHARADE_ANIMALS: readonly CharadeAnimal[] = [
-  { id: 'dog', label: 'Perro' },
-  { id: 'cat', label: 'Gato' },
   { id: 'elephant', label: 'Elefante' },
+  { id: 'cat', label: 'Gato' },
+  { id: 'dog', label: 'Perro' },
   { id: 'lion', label: 'León' },
   { id: 'monkey', label: 'Mono' },
   { id: 'penguin', label: 'Pingüino' },
-  { id: 'frog', label: 'Rana' },
-  { id: 'duck', label: 'Pato' },
   { id: 'rabbit', label: 'Conejo' },
-  { id: 'bear', label: 'Oso' },
-  { id: 'horse', label: 'Caballo' },
-  { id: 'fish', label: 'Pez' },
+  { id: 'hen', label: 'Gallina' },
+  { id: 'gorilla', label: 'Gorila' },
+  { id: 'duck', label: 'Pato' },
+  { id: 'frog', label: 'Rana' },
+  { id: 'reindeer', label: 'Reno' },
 ]
 
 export type CharadesPhase = 'playing' | 'complete'

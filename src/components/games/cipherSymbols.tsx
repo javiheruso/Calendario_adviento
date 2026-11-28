@@ -25,6 +25,7 @@ const CIPHER_ASSETS: Readonly<Record<CipherSymbolId, AssetId>> = {
   candle: 'game.cipher.candle',
   sock: 'game.cipher.sock',
   sparkle: 'game.cipher.sparkle',
+  mistletoe: 'game.cipher.mistletoe',
 }
 
 interface CipherSymbolProps {
@@ -55,6 +56,11 @@ export function CipherSymbol({ id, label = true }: CipherSymbolProps) {
 export function CipherAlphabetReference({ titleId }: { titleId: string }) {
   return (
     <section className="cipher-reference" aria-labelledby={titleId}>
+      <AssetGlyph
+        asset={getAsset('ui.parchment.horizontal')}
+        label={false}
+        className="cipher-reference__parchment"
+      />
       <h3 id={titleId}>Alfabeto de los duendes</h3>
       <ul className="cipher-alphabet">
         {CIPHER_ALPHABET.map((symbol) => (

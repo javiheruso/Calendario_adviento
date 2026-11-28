@@ -1,7 +1,7 @@
 /**
  * Day 24 magic crystal rules.
  *
- * The child deciphers LUZ and MAGIA with the fixed day 22 alphabet, then
+ * The child deciphers LUZ, Y and MAGIA with the fixed day 22 alphabet, then
  * pronounces the phrase aloud. Pronunciation is confirmed manually: there is
  * no microphone permission or automatic voice recognition.
  */
@@ -22,8 +22,8 @@ import {
   type SymbolCipherState,
 } from './symbolCipher'
 
-export const FINAL_MAGIC_PHRASE = 'LUZ MAGIA'
-export const FINAL_MAGIC_WORDS = ['LUZ', 'MAGIA'] as const
+export const FINAL_MAGIC_PHRASE = 'LUZ Y MAGIA'
+export const FINAL_MAGIC_WORDS = ['LUZ', 'Y', 'MAGIA'] as const
 
 /** The approved day 22 alphabet is reused unchanged. */
 const FINAL_MAGIC_GAME: CipherGame = createCipherGame(FINAL_MAGIC_WORDS)

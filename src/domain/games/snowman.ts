@@ -1,19 +1,20 @@
 /**
  * Day 21 absent-minded-snowman rules.
  *
- * Copito wears a hat, a scarf, a nose and buttons. Each category has exactly
- * three variants; the target combination is random. The child observes it for
- * fifteen seconds, then rebuilds it from the options. The model can be
- * consulted at any time after the observation, and a wrong attempt is only
- * feedback with unlimited retries.
+ * The final artwork fixes one model: a top hat, a carrot nose, a red scarf and
+ * coal buttons. Copito is shown wearing it for fifteen seconds; afterwards the
+ * child rebuilds it one phase at a time, choosing from three complete options
+ * per phase. Only the five complete phase images (`00_base`…`04_botones`) are
+ * displayed, never an overlay or an arbitrary combination. A wrong choice is
+ * only kind feedback with unlimited retries.
  */
 
-export type SnowmanCategory = 'hat' | 'scarf' | 'nose' | 'buttons'
+export type SnowmanCategory = 'hat' | 'nose' | 'scarf' | 'buttons'
 
 export const SNOWMAN_CATEGORIES: readonly SnowmanCategory[] = [
   'hat',
-  'scarf',
   'nose',
+  'scarf',
   'buttons',
 ]
 
@@ -21,125 +22,143 @@ export const SNOWMAN_VARIANTS_PER_CATEGORY = 3
 export const SNOWMAN_OBSERVE_SECONDS = 15
 export const SNOWMAN_OBSERVE_MS = SNOWMAN_OBSERVE_SECONDS * 1000
 
-export interface SnowmanCombination {
-  readonly hat: number
-  readonly scarf: number
-  readonly nose: number
-  readonly buttons: number
+export interface SnowmanOption {
+  readonly id: string
+  readonly label: string
 }
 
-export type SnowmanPhase = 'observing' | 'building' | 'complete'
+export interface SnowmanPhaseDefinition {
+  readonly category: SnowmanCategory
+  readonly title: string
+  readonly correctOptionId: string
+  readonly options: readonly SnowmanOption[]
+}
+
+/** The approved fixed model, in consecutive order. */
+export const SNOWMAN_FIXED_TARGET: Readonly<Record<SnowmanCategory, string>> = {
+  hat: 'top',
+  nose: 'carrot',
+  scarf: 'red',
+  buttons: 'coal',
+}
+
+export const SNOWMAN_PHASES: readonly SnowmanPhaseDefinition[] = [
+  {
+    category: 'hat',
+    title: 'El sombrero',
+    correctOptionId: 'top',
+    options: [
+      { id: 'santa', label: 'Gorro de Papá Noel' },
+      { id: 'green', label: 'Gorro verde' },
+      { id: 'top', label: 'Sombrero de copa' },
+    ],
+  },
+  {
+    category: 'nose',
+    title: 'La nariz',
+    correctOptionId: 'carrot',
+    options: [
+      { id: 'carrot', label: 'Nariz de zanahoria' },
+      { id: 'button', label: 'Nariz de botón' },
+      { id: 'pompon', label: 'Nariz de pompón' },
+    ],
+  },
+  {
+    category: 'scarf',
+    title: 'La bufanda',
+    correctOptionId: 'red',
+    options: [
+      { id: 'blue', label: 'Bufanda azul' },
+      { id: 'red', label: 'Bufanda roja' },
+      { id: 'green', label: 'Bufanda verde' },
+    ],
+  },
+  {
+    category: 'buttons',
+    title: 'Los botones',
+    correctOptionId: 'coal',
+    options: [
+      { id: 'colors', label: 'Botones de colores' },
+      { id: 'gold', label: 'Botones dorados' },
+      { id: 'coal', label: 'Botones de carbón' },
+    ],
+  },
+]
+
+export const SNOWMAN_PHASE_COUNT = SNOWMAN_PHASES.length
+
+export type SnowmanStage = 'observing' | 'building' | 'complete'
+
+export type SnowmanResult = 'none' | 'correct' | 'wrong'
 
 export interface SnowmanState {
-  readonly target: SnowmanCombination
-  readonly selection: Readonly<Record<SnowmanCategory, number | null>>
-  readonly phase: SnowmanPhase
+  readonly stage: SnowmanStage
+  /** Number of phases already solved; 0..SNOWMAN_PHASE_COUNT. */
+  readonly step: number
+  readonly lastResult: SnowmanResult
+  /** Wrong attempts only, for kind feedback; never blocks progress. */
+  readonly attempts: number
 }
 
-function pickVariant(random: () => number): number {
-  const value = Math.min(0.999, Math.max(0, random()))
-  return Math.min(
-    SNOWMAN_VARIANTS_PER_CATEGORY - 1,
-    Math.floor(value * SNOWMAN_VARIANTS_PER_CATEGORY),
-  )
-}
-
-export function createSnowmanTarget(
-  random: () => number = Math.random,
-): SnowmanCombination {
-  return {
-    hat: pickVariant(random),
-    scarf: pickVariant(random),
-    nose: pickVariant(random),
-    buttons: pickVariant(random),
-  }
-}
-
-function emptySelection(): Record<SnowmanCategory, number | null> {
-  return { hat: null, scarf: null, nose: null, buttons: null }
-}
-
-export function createSnowmanState(
-  random: () => number = Math.random,
-): SnowmanState {
-  return {
-    target: createSnowmanTarget(random),
-    selection: emptySelection(),
-    phase: 'observing',
-  }
+export function createSnowmanState(): SnowmanState {
+  return { stage: 'observing', step: 0, lastResult: 'none', attempts: 0 }
 }
 
 /** Called when the fifteen-second observation ends. */
 export function startSnowmanBuilding(state: SnowmanState): SnowmanState {
-  if (state.phase !== 'observing') {
+  if (state.stage !== 'observing') {
     return state
   }
 
-  return { ...state, phase: 'building' }
+  return { ...state, stage: 'building' }
 }
 
-function isCategory(value: string): value is SnowmanCategory {
-  return (SNOWMAN_CATEGORIES as readonly string[]).includes(value)
-}
-
-export function isSnowmanVariant(value: number): boolean {
-  return (
-    Number.isInteger(value) &&
-    value >= 0 &&
-    value < SNOWMAN_VARIANTS_PER_CATEGORY
-  )
-}
-
-/**
- * Stores one accessory choice. Selecting the full correct combination
- * completes the mission; a wrong full attempt stays editable.
- */
-export function selectSnowmanVariant(
+export function currentSnowmanPhase(
   state: SnowmanState,
-  category: SnowmanCategory,
-  variant: number,
-): SnowmanState {
-  if (state.phase !== 'building' || !isCategory(category) || !isSnowmanVariant(variant)) {
-    return state
+): SnowmanPhaseDefinition | null {
+  if (state.stage !== 'building') {
+    return null
   }
 
-  const selection = { ...state.selection, [category]: variant }
-
-  if (
-    SNOWMAN_CATEGORIES.every(
-      (candidate) => selection[candidate] === state.target[candidate],
-    )
-  ) {
-    return { ...state, selection, phase: 'complete' }
-  }
-
-  return { ...state, selection }
+  return SNOWMAN_PHASES[state.step] ?? null
 }
 
-export function clearSnowmanSelection(state: SnowmanState): SnowmanState {
-  if (state.phase === 'complete') {
-    return state
-  }
-
-  return { ...state, selection: emptySelection() }
-}
-
-export function selectedSnowmanCategories(state: SnowmanState): number {
-  return SNOWMAN_CATEGORIES.filter(
-    (category) => state.selection[category] !== null,
-  ).length
-}
-
-export function matchingSnowmanCategories(state: SnowmanState): number {
-  return SNOWMAN_CATEGORIES.filter(
-    (category) => state.selection[category] === state.target[category],
-  ).length
-}
-
-export function isSnowmanSelectionComplete(state: SnowmanState): boolean {
-  return selectedSnowmanCategories(state) === SNOWMAN_CATEGORIES.length
+export function completedSnowmanPhases(state: SnowmanState): number {
+  return state.stage === 'complete' ? SNOWMAN_PHASE_COUNT : state.step
 }
 
 export function isSnowmanComplete(state: SnowmanState): boolean {
-  return state.phase === 'complete'
+  return state.stage === 'complete'
+}
+
+/**
+ * Applies one option for the current phase. A correct answer advances to the
+ * next complete phase; a wrong answer is recorded as feedback only and the
+ * same phase stays open for another try.
+ */
+export function chooseSnowmanOption(
+  state: SnowmanState,
+  optionId: string,
+): SnowmanState {
+  if (state.stage !== 'building') {
+    return state
+  }
+
+  const phase = SNOWMAN_PHASES[state.step]
+
+  if (!phase || !phase.options.some((option) => option.id === optionId)) {
+    return state
+  }
+
+  if (optionId !== phase.correctOptionId) {
+    return { ...state, lastResult: 'wrong', attempts: state.attempts + 1 }
+  }
+
+  const nextStep = state.step + 1
+
+  if (nextStep >= SNOWMAN_PHASE_COUNT) {
+    return { ...state, stage: 'complete', step: SNOWMAN_PHASE_COUNT, lastResult: 'correct' }
+  }
+
+  return { ...state, step: nextStep, lastResult: 'correct' }
 }

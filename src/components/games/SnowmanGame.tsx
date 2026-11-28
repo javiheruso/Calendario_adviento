@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react'
 import { getAsset, type AssetId } from '../../domain/assets'
 import {
-  SNOWMAN_CATEGORIES,
   SNOWMAN_OBSERVE_SECONDS,
+  SNOWMAN_PHASE_COUNT,
+  chooseSnowmanOption,
+  completedSnowmanPhases,
   createSnowmanState,
-  clearSnowmanSelection,
+  currentSnowmanPhase,
   isSnowmanComplete,
-  isSnowmanSelectionComplete,
-  matchingSnowmanCategories,
-  selectSnowmanVariant,
-  selectedSnowmanCategories,
   startSnowmanBuilding,
   type SnowmanCategory,
   type SnowmanState,
@@ -18,91 +16,74 @@ import { AssetGlyph } from '../AssetGlyph'
 import { CountdownAnnouncer } from '../CountdownAnnouncer'
 import type { MissionGameProps } from './types'
 
-interface VariantMeta {
-  readonly asset: AssetId
-  readonly label: string
-  readonly tone?: string
-}
-
 const CATEGORY_LABELS: Readonly<Record<SnowmanCategory, string>> = {
   hat: 'Sombrero',
-  scarf: 'Bufanda',
   nose: 'Nariz',
+  scarf: 'Bufanda',
   buttons: 'Botones',
 }
 
 const SNOWMAN_ANNOUNCEMENT_MILESTONES = [10, 5, 0] as const
 
-const VARIANT_META: Readonly<Record<SnowmanCategory, readonly VariantMeta[]>> = {
-  hat: [
-    { asset: 'game.snowman.hat.top', label: 'sombrero de copa' },
-    { asset: 'game.snowman.hat.warm', label: 'gorro de invierno' },
-    { asset: 'game.snowman.hat.crown', label: 'corona' },
-  ],
-  scarf: [
-    { asset: 'game.snowman.scarf.red', label: 'bufanda roja', tone: 'red' },
-    { asset: 'game.snowman.scarf.green', label: 'bufanda verde', tone: 'green' },
-    { asset: 'game.snowman.scarf.blue', label: 'bufanda azul', tone: 'blue' },
-  ],
-  nose: [
-    { asset: 'game.snowman.nose.carrot', label: 'nariz de zanahoria' },
-    { asset: 'game.snowman.nose.button', label: 'nariz de botón' },
-    { asset: 'game.snowman.nose.coal', label: 'nariz de carbón' },
-  ],
-  buttons: [
-    { asset: 'game.snowman.buttons.two', label: 'dos botones de carbón' },
-    { asset: 'game.snowman.buttons.three', label: 'tres botones de carbón' },
-    { asset: 'game.snowman.buttons.stars', label: 'tres botones de estrella' },
-  ],
+const OPTION_ASSETS: Readonly<Record<SnowmanCategory, Readonly<Record<string, AssetId>>>> = {
+  hat: {
+    top: 'game.snowman.option.hat.top',
+    santa: 'game.snowman.option.hat.santa',
+    green: 'game.snowman.option.hat.green',
+  },
+  nose: {
+    carrot: 'game.snowman.option.nose.carrot',
+    button: 'game.snowman.option.nose.button',
+    pompon: 'game.snowman.option.nose.pompon',
+  },
+  scarf: {
+    red: 'game.snowman.option.scarf.red',
+    blue: 'game.snowman.option.scarf.blue',
+    green: 'game.snowman.option.scarf.green',
+  },
+  buttons: {
+    coal: 'game.snowman.option.buttons.coal',
+    colors: 'game.snowman.option.buttons.colors',
+    gold: 'game.snowman.option.buttons.gold',
+  },
 }
 
-function CombinationPreview({
-  title,
-  combination,
-}: {
-  title: string
-  combination: Readonly<Record<SnowmanCategory, number | null>>
-}) {
-  return (
-    <div className="snowman-preview" aria-label={title}>
-      <p className="snowman-preview__title">{title}</p>
-      <span className="snowman-preview__body" aria-hidden="true">
-        <AssetGlyph asset={getAsset('game.snowman.body')} label={false} />
-      </span>
-      <ul className="snowman-preview__accessories">
-        {SNOWMAN_CATEGORIES.map((category) => {
-          const variant = combination[category]
-          const meta = variant === null ? null : VARIANT_META[category][variant]
+/** Complete phase images in consecutive order: base plus one per solved phase. */
+const PHASE_ASSETS: readonly AssetId[] = [
+  'game.snowman.phase.base',
+  'game.snowman.phase.hat',
+  'game.snowman.phase.nose',
+  'game.snowman.phase.scarf',
+  'game.snowman.phase.buttons',
+]
 
-          return (
-            <li key={category} className="snowman-accessory">
-              <span
-                className={`snowman-accessory__glyph${
-                  meta?.tone ? ` snowman-accessory__glyph--${meta.tone}` : ''
-                }`}
-                aria-hidden="true"
-              >
-                {meta ? (
-                  <AssetGlyph asset={getAsset(meta.asset)} label={false} />
-                ) : (
-                  '?'
-                )}
-              </span>
-              <span className="snowman-accessory__label">
-                {CATEGORY_LABELS[category]}: {meta ? meta.label : 'sin elegir'}
-              </span>
-            </li>
-          )
-        })}
-      </ul>
-    </div>
+function optionAsset(category: SnowmanCategory, optionId: string): AssetId {
+  return OPTION_ASSETS[category][optionId] ?? PHASE_ASSETS[0]
+}
+
+function PhaseGallery({ count, title }: { count: number; title: string }) {
+  const visible = PHASE_ASSETS.slice(0, Math.max(1, Math.min(PHASE_ASSETS.length, count + 1)))
+
+  return (
+    <section className="snowman-gallery" aria-label={title}>
+      <p className="snowman-gallery__title">{title}</p>
+      <ol className="snowman-gallery__list">
+        {visible.map((assetId) => (
+          <li key={assetId}>
+            <AssetGlyph asset={getAsset(assetId)} label={false} className="snowman-gallery__image" />
+          </li>
+        ))}
+      </ol>
+    </section>
   )
 }
 
 /**
- * Day 21: observe Copito's random combination for fifteen seconds, rebuild it
- * with three variants per category, and consult the model whenever needed. A
- * wrong combination is only feedback and can be retried.
+ * Day 21: observe Copito's fixed model for fifteen seconds, then recreate it
+ * phase by phase. Each phase offers three complete options; a wrong choice is
+ * kind feedback and never advances or penalises. The complete phase images are
+ * the only visuals used for the model and the rebuilt snowman, so nothing is
+ * layered or combined.
  */
 export function SnowmanGame({ onComplete }: MissionGameProps) {
   const [state, setState] = useState<SnowmanState>(() => createSnowmanState())
@@ -110,10 +91,12 @@ export function SnowmanGame({ onComplete }: MissionGameProps) {
   const [showModel, setShowModel] = useState(false)
   const [feedback, setFeedback] = useState<string | null>(null)
   const complete = isSnowmanComplete(state)
-  const observing = state.phase === 'observing'
+  const observing = state.stage === 'observing'
+  const phase = currentSnowmanPhase(state)
+  const solvedPhases = completedSnowmanPhases(state)
 
   useEffect(() => {
-    if (state.phase !== 'observing') {
+    if (state.stage !== 'observing') {
       return
     }
 
@@ -130,33 +113,36 @@ export function SnowmanGame({ onComplete }: MissionGameProps) {
     }, 1000)
 
     return () => window.clearTimeout(timer)
-  }, [state.phase, secondsLeft])
+  }, [state.stage, secondsLeft])
 
-  function choose(category: SnowmanCategory, variant: number) {
-    const next = selectSnowmanVariant(state, category, variant)
+  function choose(category: SnowmanCategory, optionId: string, label: string) {
+    const next = chooseSnowmanOption(state, optionId)
     setState(next)
 
     if (isSnowmanComplete(next)) {
-      setFeedback('¡Copito está igual que antes!')
+      setFeedback('¡Copito está vestido igual que antes!')
       return
     }
 
-    if (isSnowmanSelectionComplete(next)) {
+    if (next.lastResult === 'wrong') {
       setFeedback(
-        `Todavía no es igual. Coinciden ${matchingSnowmanCategories(next)} de 4 detalles. Mira el modelo y prueba otra vez.`,
+        `No pasa nada: Copito te sonríe. Ese no es el detalle correcto. Prueba otra vez con ${CATEGORY_LABELS[category].toLowerCase()}.`,
       )
       return
     }
 
-    setFeedback(null)
+    if (next.lastResult === 'correct') {
+      setFeedback(`¡Bien! ${label} es correcto. Copito ya tiene un detalle más.`)
+    }
   }
 
   return (
     <div className="game game--snowman">
       <p className="game__lead">
         Copito se ha vestido y luego se ha olvidado de cómo iba. Míralo durante quince
-        segundos, reconstruye su combinación y consulta el modelo cuando quieras. No hay
-        castigos ni límite de intentos.
+        segundos. Después reconstruye su modelo paso a paso: sombrero, nariz, bufanda y
+        botones. En cada paso tienes tres opciones completas y puedes consultar el
+        modelo cuando quieras. No hay castigos ni límite de intentos.
       </p>
 
       {observing ? (
@@ -170,7 +156,17 @@ export function SnowmanGame({ onComplete }: MissionGameProps) {
           <p className="game__status">
             Quedan {secondsLeft} segundos de observación
           </p>
-          <CombinationPreview title="Copito lleva esta combinación" combination={state.target} />
+          <figure className="snowman-model">
+            <AssetGlyph
+              asset={getAsset('game.snowman.phase.buttons')}
+              label={false}
+              className="snowman-model__image"
+              priority
+            />
+            <figcaption className="snowman-model__caption">
+              Sombrero de copa, nariz de zanahoria, bufanda roja y botones de carbón.
+            </figcaption>
+          </figure>
         </section>
       ) : null}
 
@@ -186,62 +182,55 @@ export function SnowmanGame({ onComplete }: MissionGameProps) {
             >
               {showModel ? 'Ocultar modelo' : 'Ver modelo'}
             </button>
-            <button
-              type="button"
-              className="button button--secondary"
-              onClick={() => {
-                setState((current) => clearSnowmanSelection(current))
-                setFeedback(null)
-              }}
-              disabled={complete || selectedSnowmanCategories(state) === 0}
-            >
-              Borrar elección
-            </button>
           </div>
 
           {showModel && !complete ? (
-            <CombinationPreview title="Modelo: así iba Copito" combination={state.target} />
+            <figure className="snowman-model snowman-model--consult">
+              <AssetGlyph
+                asset={getAsset('game.snowman.phase.buttons')}
+                label={false}
+                className="snowman-model__image"
+                priority
+              />
+              <figcaption className="snowman-model__caption">
+                Modelo: sombrero de copa, nariz de zanahoria, bufanda roja y botones de
+                carbón.
+              </figcaption>
+            </figure>
           ) : null}
 
           <p className="game__status" role="status">
-            Detalles elegidos: {selectedSnowmanCategories(state)} de 4
+            Pasos completados: {solvedPhases} de {SNOWMAN_PHASE_COUNT}
           </p>
 
-          <CombinationPreview title="Tu Copito" combination={state.selection} />
+          <PhaseGallery count={solvedPhases} title="Copito va así" />
 
-          <div className="snowman-options">
-            {SNOWMAN_CATEGORIES.map((category) => (
-              <section className="snowman-category" key={category}>
-                <h3>{CATEGORY_LABELS[category]}</h3>
-                <div className="snowman-category__options">
-                  {VARIANT_META[category].map((variant, index) => {
-                    const selected = state.selection[category] === index
-
-                    return (
-                      <button
-                        key={variant.label}
-                        type="button"
-                        className={`snowman-option${selected ? ' snowman-option--selected' : ''}`}
-                        onClick={() => choose(category, index)}
-                        disabled={complete}
-                        aria-pressed={selected}
-                      >
-                        <span
-                          className={`snowman-option__glyph${
-                            variant.tone ? ` snowman-option__glyph--${variant.tone}` : ''
-                          }`}
-                          aria-hidden="true"
-                        >
-                          <AssetGlyph asset={getAsset(variant.asset)} label={false} />
-                        </span>
-                        <span className="snowman-option__label">{variant.label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </section>
-            ))}
-          </div>
+          {phase && !complete ? (
+            <section className="snowman-step" aria-labelledby="snowman-step-title">
+              <h3 id="snowman-step-title">{phase.title}</h3>
+              <p className="game__hint">¿Qué detalle llevaba Copito en este paso?</p>
+              <div className="snowman-category__options">
+                {phase.options.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    className="snowman-option"
+                    onClick={() => choose(phase.category, option.id, option.label)}
+                    disabled={complete}
+                  >
+                    <span className="snowman-option__glyph" aria-hidden="true">
+                      <AssetGlyph
+                        asset={getAsset(optionAsset(phase.category, option.id))}
+                        label={false}
+                        className="snowman-option__image"
+                      />
+                    </span>
+                    <span className="snowman-option__label">{option.label}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : null}
         </>
       ) : null}
 

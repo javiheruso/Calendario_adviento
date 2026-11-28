@@ -3,6 +3,8 @@ import { strict as assert } from 'node:assert'
 import {
   REINDEER_MAZE,
   REINDEER_CARROT_COUNT,
+  REINDEER_WALK_FRAME_MS,
+  REINDEER_WALK_STOP_MS,
   carrotsRemaining,
   createReindeerMazeState,
   isAtStable,
@@ -26,6 +28,11 @@ function walk(
 
   return current
 }
+
+test('the walk animation uses two frames inside the 150–200 ms window', () => {
+  assert.ok(REINDEER_WALK_FRAME_MS >= 150 && REINDEER_WALK_FRAME_MS <= 200)
+  assert.ok(REINDEER_WALK_STOP_MS >= REINDEER_WALK_FRAME_MS * 2)
+})
 
 test('the maze has three reachable carrots and a stable', () => {
   assert.equal(REINDEER_CARROT_COUNT, 3)

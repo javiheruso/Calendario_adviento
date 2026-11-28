@@ -1,5 +1,5 @@
 import { useEffect, useState, type PointerEvent } from 'react'
-import { getAsset } from '../../domain/assets'
+import { getAsset, type AssetId } from '../../domain/assets'
 import {
   CATCH_TARGET,
   createCatchGame,
@@ -12,6 +12,17 @@ import { AssetGlyph } from '../AssetGlyph'
 import type { MissionGameProps } from './types'
 
 const KEYBOARD_STEP = 0.07
+
+const GIFT_ASSETS: readonly AssetId[] = [
+  'game.catch.gift.red',
+  'game.catch.gift.blue',
+  'game.catch.gift.green',
+  'game.catch.gift.gold',
+]
+
+function giftAsset(id: number): AssetId {
+  return GIFT_ASSETS[id % GIFT_ASSETS.length]
+}
 
 /**
  * Day 12: move the basket with a finger or mouse and catch 15 gifts. The fall
@@ -93,7 +104,7 @@ export function CatchGiftsGame({ onComplete }: MissionGameProps) {
             style={{ left: `${gift.x * 100}%`, top: `${gift.y * 100}%` }}
             aria-hidden="true"
           >
-            <AssetGlyph asset={getAsset('ui.gift')} label={false} />
+            <AssetGlyph asset={getAsset(giftAsset(gift.id))} label={false} />
           </span>
         ))}
 

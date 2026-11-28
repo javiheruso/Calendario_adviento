@@ -29,13 +29,13 @@ function markSpot(
   return markSpotDifference(state, point.x, point.y)
 }
 
-test('the five approved differences are defined once with valid rectangles', () => {
-  assert.equal(SPOT_DIFFERENCE_COUNT, 5)
-  assert.equal(SPOT_DIFFERENCES.length, 5)
-  assert.equal(new Set(SPOT_DIFFERENCES.map((spot) => spot.id)).size, 5)
+test('the seven approved differences are defined once with valid rectangles', () => {
+  assert.equal(SPOT_DIFFERENCE_COUNT, 7)
+  assert.equal(SPOT_DIFFERENCES.length, 7)
+  assert.equal(new Set(SPOT_DIFFERENCES.map((spot) => spot.id)).size, 7)
   assert.deepEqual(
     SPOT_DIFFERENCES.map((spot) => spot.id),
-    ['bauble', 'gift', 'clock', 'hat', 'carrot'],
+    ['bear-hat', 'elf-pompom', 'scarf', 'train-symbol', 'rudolph-bow', 'mug', 'paint-pot'],
   )
 
   for (const spot of SPOT_DIFFERENCES) {
@@ -60,16 +60,16 @@ test('marking a difference in either picture shares the same found state', () =>
 
 test('taps outside every change are unlimited and never lose progress', () => {
   const state = createSpotDifferenceState()
-  const miss = markSpotDifference(state, 0.5, 0.05)
+  const miss = markSpotDifference(state, 0.5, 0.03)
   assert.equal(miss.result, 'miss')
   assert.equal(foundSpotCount(miss.state), 0)
 
   for (let attempt = 0; attempt < 5; attempt += 1) {
-    assert.equal(markSpotDifference(miss.state, 0.5, 0.05).result, 'miss')
+    assert.equal(markSpotDifference(miss.state, 0.5, 0.03).result, 'miss')
   }
 })
 
-test('the mission completes only after all five differences', () => {
+test('the mission completes only after all seven differences', () => {
   let state = createSpotDifferenceState()
 
   SPOT_DIFFERENCES.forEach((spot, index) => {

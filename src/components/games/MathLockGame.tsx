@@ -194,6 +194,15 @@ export function MathLockGame({ onComplete }: MissionGameProps) {
         {state.operationsSolved.length} de {MATH_OPERATIONS.length}
       </p>
 
+      <figure className="math-chest">
+        <AssetGlyph
+          asset={getAsset(state.unlocked ? 'game.math.chest.open' : 'game.math.chest')}
+          label={!state.unlocked}
+          className="math-chest__image"
+          priority
+        />
+      </figure>
+
       <table className="math-table">
         <caption>Tabla de valores del cofre</caption>
         <thead>
@@ -258,7 +267,7 @@ export function MathLockGame({ onComplete }: MissionGameProps) {
         <section className="math-step" aria-labelledby="math-lock-title">
           <h3 id="math-lock-title">
             <span aria-hidden="true">
-              <AssetGlyph asset={getAsset('game.math.chest')} label={false} />
+              <AssetGlyph asset={getAsset('game.math.lock')} label={false} />
             </span>{' '}
             El candado del cofre
           </h3>

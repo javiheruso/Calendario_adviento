@@ -650,6 +650,23 @@ export function KaraokeGame({
       {snapshot.phase === 'ready' ? (
         <section className="karaoke-stage" aria-labelledby="karaoke-ready-title">
           <h3 id="karaoke-ready-title">Los seis estilos</h3>
+          <figure className="karaoke-hero">
+            <AssetGlyph
+              asset={getAsset('game.karaoke.stage')}
+              label={false}
+              className="karaoke-hero__stage"
+              priority
+            />
+            <span className="karaoke-hero__mic" aria-hidden="true">
+              <AssetGlyph asset={getAsset('game.karaoke.microphone')} label={false} />
+            </span>
+            <span className="karaoke-hero__trasto" aria-hidden="true">
+              <AssetGlyph asset={getAsset('game.karaoke.trasto')} label={false} />
+            </span>
+            <figcaption className="karaoke-hero__caption">
+              Trasto te espera en el escenario con el micrófono.
+            </figcaption>
+          </figure>
           <ol className="karaoke-styles">
             {KARAOKE_STYLES.map((style) => (
               <li key={style.id}>
@@ -686,6 +703,9 @@ export function KaraokeGame({
               <p className="karaoke-style__glyph" aria-hidden="true">
                 <AssetGlyph asset={getAsset(STYLE_ASSETS[snapshot.style.id])} label={false} />
               </p>
+              <span className="karaoke-style__trasto" aria-hidden="true">
+                <AssetGlyph asset={getAsset('brand.trasto.sings')} label={false} />
+              </span>
               <p className="karaoke-style__text">
                 <span className="karaoke-style__label">{snapshot.style.label}</span>
                 {snapshot.style.instruction}

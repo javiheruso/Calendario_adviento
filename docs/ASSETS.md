@@ -1,0 +1,86 @@
+# Definitive artwork — integration and verification
+
+The definitive WebP set extracted from `recursos/Trasto_recursos_web.zip` into `public/assets/final/` is now the app artwork. `src/domain/assets.ts` is the only catalog, `resolveAssetPath` applies the Vite base path, and `AssetGlyph` keeps images lazy unless a mission scene or phase is already on screen. `recursos/` and the source ZIP stay git-ignored and were not modified.
+
+## Quick path
+
+1. Read `Loading strategy` before adding a new image reference.
+2. Run `npm test` and `npm run verify:pages` after changing the catalog.
+3. Use `docs/TECHNICAL_DECISIONS.md` for architecture decisions and this file for the artwork audit snapshot.
+
+## Loading strategy
+
+| Rule | Implementation |
+|------|----------------|
+| Single source | Every path lives in `src/domain/assets.ts`; components never build media URLs. |
+| Base path | `resolveAssetPath` prefixes Vite's `BASE_URL`, so GitHub Pages sub-paths work. |
+| Lazy by default | `AssetGlyph` renders `loading="lazy"` and `decoding="async"`. |
+| Eager only when needed | A mission scene or current phase passes `priority`, which sets `loading="eager"` and `fetchPriority="high"`. |
+| No whole-folder preload | The 120-file / 41 MB folder is never requested on first paint; shared icons and doors stream in as they render. |
+| Honest fallback | Only entries without a final asset stay emoji with `provisional: true`. |
+
+## Verification performed
+
+| Check | Command / method | Result |
+|-------|------------------|--------|
+| Catalog file existence | `npm test` → `test/assets.test.ts` | Every `kind: 'image'` entry resolves to a non-empty file under `public/`. |
+| Built output and Pages base | `npm run verify:pages` | 119 URLs served; 115 catalog images present in `dist/` and resolved under `/calendario_adviento/`. |
+| Format and dimensions | `file` + `ffprobe` on every final file | 120 final files: 111 with alpha (`yuva420p`/`argb`), 9 without alpha (`yuv420p`). No missing or zero-byte catalog files. |
+| Hotspot alignment, day 6 | Cropped each measured rectangle from `taller_A` and `taller_B` with `ffmpeg`, reviewed side by side | The seven regions contain the intended change in both images. |
+| Hotspot alignment, day 19 | Cropped each measured rectangle from `escena_objetos` | The six regions contain the gift, bell, candy cane, Santa hat, blue bauble and star. |
+| Aspect ratios | CSS review + image metadata | Day 6 scene is 3:4, day 19 scene is 1672:941, day 16 board is 3:2, day 24 sleigh is 2:1, crystals are square; no stretched container. |
+
+## Key artwork dimensions
+
+| Surface | Asset | Dimensions |
+|---------|-------|------------|
+| Day 6 scenes | `06_diferencias/taller_A.webp`, `taller_B.webp` | 768×1024 |
+| Day 16 puzzle | `16_cuadro_roto/puzzle_trasto_rodolfo.webp` | 1536×1024 |
+| Day 19 scene | `19_taller_desordenado/escena_objetos.webp` | 1672×941 |
+| Day 21 phases | `21_muneco/fases/00_base…04_botones.webp` | 490×462 |
+| Day 24 crystals | `24_final/cristal_*_off/on.webp` | 1254×1254 |
+| Day 24 sleigh | `24_final/trineo_preparado/volando.webp` | 1774×887 |
+| Characters | `00_comunes/personajes/*.webp` | 1024×1536, 1312×1199, 1199×1312 or 1024×1536 |
+| Bells and stand | `18_campanas/*.webp` | 1254×1254; stand 1448×1086 |
+
+## Provisional placeholders that remain
+
+These entries intentionally stay emoji because the final folder has no matching asset. They keep the mission playable and are not presented as final art.
+
+| Area | Entry | Reason |
+|------|-------|--------|
+| Final intelligence crystal | `game.final.santa` | No definitive Papá Noel asset in the folder. |
+| Reindeer maze | `game.maze.tree` | No snowy-pine asset; only the decorated star tree exists. |
+| System/UI actions | Album photo/video/import/export icons | No final action icons; functional emoji remain. |
+| Game cue glyphs | Dance moves, snowball hit/miss, sock colour variants, no-laugh faces, pyramid cup/clock, touch-hand/safe-object/hit, karaoke style icons | No per-cue final artwork. |
+| Day 9 socks | Five colour variants | Only one final sock object exists, so the colour pairs remain emoji to stay distinguishable. |
+
+The day 2 memory pairs are not provisional: they reuse existing final Rodolfo, snowman, gift, star, bell and tree art because the folder has no dedicated pair set.
+
+## Unused final files
+
+These five files are present in `public/assets/final/` but not referenced by the current child flow. They are optional UI or physical-print material, not missing dependencies.
+
+- `00_comunes/interfaz/boton_rojo.webp`
+- `00_comunes/interfaz/boton_verde.webp`
+- `00_comunes/interfaz/cartel_madera.webp`
+- `25_despedida_fisica/plantilla_carta.webp`
+- `25_despedida_fisica/plantilla_diploma.webp`
+
+The background city/workshop images are cataloged but not rendered by the current surfaces; they are available for future layouts without changing the catalog.
+
+## Limits of this verification
+
+- No browser, mobile device or screen-reader visual QA was executed. Chromium/Playwright is not installed in this environment, so the review is static: metadata, crops, CSS reasoning, type-check, build and served-asset checks.
+- Hotspot rectangles were measured and visually confirmed against the final images, but they were not validated by tapping on a real touch device.
+- Pixel-perfect rendering, contrast, font metrics and per-viewport cropping remain manual QA items.
+- The source ZIP and `recursos/` folder were not opened, changed or copied; only the already-extracted `public/assets/final/` files were used.
+
+## Checklist
+
+- [x] Every declared image exists under `public/` and in `dist/`.
+- [x] The Pages base path resolves every catalog image.
+- [x] Day 6 and day 19 hotspots were inspected against the real artwork.
+- [x] Aspect-ratio-sensitive surfaces keep their original ratio.
+- [ ] Real-device touch and mobile visual QA.
+- [ ] Final Papá Noel and snowy-pine artwork.

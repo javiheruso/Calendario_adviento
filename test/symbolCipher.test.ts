@@ -36,9 +36,9 @@ function typeWord(
   return current
 }
 
-test('the fixed alphabet has exactly thirteen approved symbols', () => {
-  assert.equal(CIPHER_SYMBOL_COUNT, 13)
-  assert.equal(CIPHER_ALPHABET.length, 13)
+test('the fixed alphabet has exactly fourteen approved symbols', () => {
+  assert.equal(CIPHER_SYMBOL_COUNT, 14)
+  assert.equal(CIPHER_ALPHABET.length, 14)
   assert.deepEqual(
     CIPHER_ALPHABET.map((symbol) => [symbol.id, symbol.letter]),
     [
@@ -55,20 +55,23 @@ test('the fixed alphabet has exactly thirteen approved symbols', () => {
       ['candle', 'T'],
       ['sock', 'R'],
       ['sparkle', 'Z'],
+      ['mistletoe', 'Y'],
     ],
   )
-  assert.equal(new Set(CIPHER_ALPHABET.map((symbol) => symbol.id)).size, 13)
-  assert.equal(new Set(CIPHER_ALPHABET.map((symbol) => symbol.letter)).size, 13)
+  assert.equal(new Set(CIPHER_ALPHABET.map((symbol) => symbol.id)).size, 14)
+  assert.equal(new Set(CIPHER_ALPHABET.map((symbol) => symbol.letter)).size, 14)
 })
 
 test('every symbol has a stable accessible name and reference description', () => {
-  assert.equal(Object.keys(CIPHER_SYMBOL_NAMES).length, 13)
+  assert.equal(Object.keys(CIPHER_SYMBOL_NAMES).length, 14)
   assert.equal(cipherSymbolName('tree'), 'Árbol')
   assert.equal(cipherSymbolName('snowman'), 'Muñeco de nieve')
   assert.equal(cipherSymbolName('sparkle'), 'Destello')
   assert.equal(describeCipherSymbol('tree'), 'Árbol: letra A')
   assert.equal(describeCipherSymbol('sparkle'), 'Destello: letra Z')
-  assert.equal(new Set(Object.values(CIPHER_SYMBOL_NAMES)).size, 13)
+  assert.equal(cipherSymbolName('mistletoe'), 'Muérdago')
+  assert.equal(describeCipherSymbol('mistletoe'), 'Muérdago: letra Y')
+  assert.equal(new Set(Object.values(CIPHER_SYMBOL_NAMES)).size, 14)
 })
 
 test('the table resolves both directions and the three approved words', () => {
@@ -76,8 +79,10 @@ test('the table resolves both directions and the three approved words', () => {
   assert.equal(letterForCipherSymbol('sparkle'), 'Z')
   assert.equal(cipherSymbolForLetter('m'), 'star')
   assert.equal(cipherSymbolForLetter('Z'), 'sparkle')
+  assert.equal(cipherSymbolForLetter('Y'), 'mistletoe')
   assert.equal(cipherSymbolForLetter('Q'), null)
 
+  assert.deepEqual(symbolsForWord('Y'), ['mistletoe'])
   assert.deepEqual(symbolsForWord('RENO'), ['sock', 'bell', 'snowflake', 'snowman'])
   assert.deepEqual(symbolsForWord('MAGIA'), [
     'star',

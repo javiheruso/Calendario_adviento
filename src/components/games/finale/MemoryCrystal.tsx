@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getAsset } from '../../../domain/assets'
+import { getAsset, type AssetId } from '../../../domain/assets'
 import {
   beginSimonInput,
   createSimonProgress,
@@ -13,12 +13,17 @@ import { createFinalBellGame } from '../../../domain/games/finalMemory'
 import { AssetGlyph } from '../../AssetGlyph'
 import type { CrystalProps } from './types'
 
-const BELLS = [
-  { note: 0, label: 'Do', tone: 'red' },
-  { note: 1, label: 'Re', tone: 'blue' },
-  { note: 2, label: 'Mi', tone: 'green' },
-  { note: 3, label: 'Fa', tone: 'gold' },
-] as const
+const BELLS: readonly {
+  note: number
+  label: string
+  tone: string
+  asset: AssetId
+}[] = [
+  { note: 0, label: 'Do', tone: 'red', asset: 'game.simon.bell.red' },
+  { note: 1, label: 'Re', tone: 'blue', asset: 'game.simon.bell.blue' },
+  { note: 2, label: 'Mi', tone: 'green', asset: 'game.simon.bell.green' },
+  { note: 3, label: 'Fa', tone: 'gold', asset: 'game.simon.bell.gold' },
+]
 
 const NOTE_ON_MS = 380
 const NOTE_GAP_MS = 220
@@ -106,7 +111,7 @@ export function MemoryCrystal({ onSolved }: CrystalProps) {
             aria-label={`Campana ${bell.label}`}
           >
             <span className="simon-bell__glyph" aria-hidden="true">
-              <AssetGlyph asset={getAsset('game.simon.bell')} label={false} />
+              <AssetGlyph asset={getAsset(bell.asset)} label={false} />
             </span>
             <span className="simon-bell__label">{bell.label}</span>
           </button>

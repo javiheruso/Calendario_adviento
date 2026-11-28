@@ -64,7 +64,15 @@ export function CraftSurpriseGame({ onComplete }: MissionGameProps) {
       </ul>
 
       {selected ? (
-        <div className="notice" role="status">
+        <div className="notice craft-selection" role="status">
+          <span className="craft-selection__glyph" aria-hidden="true">
+            <AssetGlyph
+              asset={getAsset('game.craft.excited')}
+              label={false}
+              className="craft-selection__image"
+              priority
+            />
+          </span>
           <p>
             <strong>Has elegido: {selected.label.toLowerCase()}.</strong>{' '}
             {selected.detail}
@@ -89,7 +97,12 @@ export function CraftSurpriseGame({ onComplete }: MissionGameProps) {
         <div className="game__complete" role="status">
           <p className="craft-farewell">
             <span className="craft-farewell__glyph" aria-hidden="true">
-              <AssetGlyph asset={getAsset('game.craft.farewell')} label={false} />
+              <AssetGlyph
+                asset={getAsset('game.craft.farewell')}
+                label={false}
+                className="craft-farewell__image"
+                priority
+              />
             </span>
             <span>
               <strong>Trasto se despide con una sonrisa enorme.</strong> Guardará tu

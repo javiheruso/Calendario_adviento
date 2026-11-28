@@ -74,6 +74,12 @@ export function PatternsGame({ onComplete }: MissionGameProps) {
       {challenge && !waitingForNext ? (
         <>
           <div className="pattern-strip" aria-label="Secuencia de adornos">
+            <AssetGlyph
+              asset={getAsset('game.pattern.belt')}
+              label={false}
+              className="pattern-strip__belt"
+              priority
+            />
             {challenge.sequence.map((token, index) => (
               <TokenChip key={`${challenge.id}-${index}`} token={token} />
             ))}

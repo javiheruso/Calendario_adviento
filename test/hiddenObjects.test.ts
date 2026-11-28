@@ -35,7 +35,7 @@ test('the six approved hidden objects are defined once with valid rectangles', (
   assert.equal(HIDDEN_OBJECTS.length, 6)
   assert.deepEqual(
     HIDDEN_OBJECTS.map((object) => object.id),
-    ['key', 'sock', 'carrot', 'bell', 'teddy', 'candy'],
+    ['santaHat', 'star', 'blueBauble', 'bell', 'candyCane', 'gift'],
   )
   assert.equal(new Set(HIDDEN_OBJECTS.map((object) => object.zone)).size, 6)
 
@@ -47,13 +47,13 @@ test('the six approved hidden objects are defined once with valid rectangles', (
 
 test('an object is found once and repeated taps are harmless', () => {
   const initial = createHiddenObjectsState()
-  const key = HIDDEN_OBJECTS[0]
+  const gift = HIDDEN_OBJECTS.find((object) => object.id === 'gift')!
 
-  const first = markHiddenObject(initial, key.id)
+  const first = markHiddenObject(initial, gift.id)
   assert.equal(first.result, 'found')
   assert.equal(foundHiddenObjectCount(first.state), 1)
 
-  const repeated = markHiddenObject(first.state, key.id)
+  const repeated = markHiddenObject(first.state, gift.id)
   assert.equal(repeated.result, 'already-found')
   assert.equal(foundHiddenObjectCount(repeated.state), 1)
 })
@@ -62,7 +62,7 @@ test('taps outside every object are unlimited and never lose progress', () => {
   const state = createHiddenObjectsState()
 
   for (let attempt = 0; attempt < 5; attempt += 1) {
-    assert.equal(findHiddenObjectAt(state, 0.52, 0.02).result, 'miss')
+    assert.equal(findHiddenObjectAt(state, 0.02, 0.95).result, 'miss')
   }
 
   assert.equal(foundHiddenObjectCount(state), 0)

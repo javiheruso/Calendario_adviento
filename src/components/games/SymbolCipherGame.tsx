@@ -17,7 +17,7 @@ import type { MissionGameProps } from './types'
 const KEYBOARD_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
 /**
- * Day 22: use the fixed thirteen-symbol alphabet to decipher RENO, MAGIA and
+ * Day 22: use the fixed fourteen-symbol alphabet to decipher RENO, MAGIA and
  * REGALO with the built-in keyboard. Wrong letters are only feedback and the
  * table stays visible as a parchment reference.
  */

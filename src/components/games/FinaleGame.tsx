@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getAsset, type AssetId } from '../../domain/assets'
 import {
   FINAL_CRYSTALS,
@@ -17,30 +17,63 @@ import { MemoryCrystal } from './finale/MemoryCrystal'
 
 interface CrystalMeta {
   readonly title: string
-  readonly asset: AssetId
+  readonly offAsset: AssetId
+  readonly onAsset: AssetId
 }
 
 const CRYSTAL_META: Readonly<Record<FinalCrystal, CrystalMeta>> = {
   intelligence: {
     title: 'Inteligencia',
-    asset: 'game.final.crystal.intelligence',
+    offAsset: 'game.final.crystal.red.off',
+    onAsset: 'game.final.crystal.red.on',
   },
   memory: {
     title: 'Memoria',
-    asset: 'game.final.crystal.memory',
+    offAsset: 'game.final.crystal.blue.off',
+    onAsset: 'game.final.crystal.blue.on',
   },
   magic: {
     title: 'Magia',
-    asset: 'game.final.crystal.magic',
+    offAsset: 'game.final.crystal.gold.off',
+    onAsset: 'game.final.crystal.gold.on',
   },
+}
+
+/**
+ * Prepared-to-flying sleigh transition. Both final images keep the same box and
+ * cross-fade with a light CSS transition; no dependency or animation library is
+ * used.
+ */
+function FinalSleigh() {
+  const [flying, setFlying] = useState(false)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setFlying(true), 700)
+    return () => window.clearTimeout(timer)
+  }, [])
+
+  return (
+    <div className={`finale-sleigh${flying ? ' finale-sleigh--flying' : ''}`}>
+      <AssetGlyph
+        asset={getAsset('game.final.sleigh.prepared')}
+        label={false}
+        className="finale-sleigh__image finale-sleigh__image--prepared"
+        priority
+      />
+      <AssetGlyph
+        asset={getAsset('game.final.sleigh.flying')}
+        label={false}
+        className="finale-sleigh__image finale-sleigh__image--flying"
+        priority
+      />
+    </div>
+  )
 }
 
 function FinalScene({ onContinue }: { onContinue: () => void }) {
   return (
     <section className="finale-scene finale-scene--lit" aria-labelledby="finale-scene-title">
-      <div className="finale-scene__sleigh" aria-hidden="true">
-        <AssetGlyph asset={getAsset('game.final.sleigh')} label={false} />
-      </div>
+      <FinalSleigh />
       <h3 id="finale-scene-title">¡El trineo se ha iluminado!</h3>
       <p>
         Los tres cristales brillan a la vez. Trasto ya puede volver con Papá Noel
@@ -72,8 +105,8 @@ function FinalScene({ onContinue }: { onContinue: () => void }) {
 
 /**
  * Day 24 final mission: activate the intelligence, memory and magic crystals in
- * order. Each crystal is a self-contained game. When all three are lit, a
- * provisional illuminated-sleigh scene celebrates progress and hands the child
+ * order. Each crystal is a self-contained game. When all three are lit, the
+ * final prepared/flying sleigh scene celebrates progress and hands the child
  * back to the existing hint and gift/star flow. There is no timer.
  */
 export function FinaleGame({ onComplete }: MissionGameProps) {
@@ -98,6 +131,7 @@ export function FinaleGame({ onComplete }: MissionGameProps) {
         {FINAL_CRYSTALS.map((crystal) => {
           const done = mission.completed.includes(crystal)
           const active = current === crystal
+          const meta = CRYSTAL_META[crystal]
 
           return (
             <li
@@ -107,11 +141,13 @@ export function FinaleGame({ onComplete }: MissionGameProps) {
               }`}
             >
               <span className="finale-crystal__glyph" aria-hidden="true">
-                <AssetGlyph asset={getAsset(CRYSTAL_META[crystal].asset)} label={false} />
+                <AssetGlyph
+                  asset={getAsset(done ? meta.onAsset : meta.offAsset)}
+                  label={false}
+                  className="finale-crystal__image"
+                />
               </span>
-              <span className="finale-crystal__label">
-                {CRYSTAL_META[crystal].title}
-              </span>
+              <span className="finale-crystal__label">{meta.title}</span>
               <span className="finale-crystal__state" aria-hidden="true">
                 {done ? '✓' : active ? '•' : '·'}
               </span>

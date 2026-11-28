@@ -12,18 +12,18 @@ import { AssetGlyph } from '../AssetGlyph'
 import type { MissionGameProps } from './types'
 
 const ANIMAL_ASSETS: Readonly<Record<string, AssetId>> = {
-  dog: 'game.charades.dog',
-  cat: 'game.charades.cat',
   elephant: 'game.charades.elephant',
+  cat: 'game.charades.cat',
+  dog: 'game.charades.dog',
   lion: 'game.charades.lion',
   monkey: 'game.charades.monkey',
   penguin: 'game.charades.penguin',
-  frog: 'game.charades.frog',
-  duck: 'game.charades.duck',
   rabbit: 'game.charades.rabbit',
-  bear: 'game.charades.bear',
-  horse: 'game.charades.horse',
-  fish: 'game.charades.fish',
+  hen: 'game.charades.hen',
+  gorilla: 'game.charades.gorilla',
+  duck: 'game.charades.duck',
+  frog: 'game.charades.frog',
+  reindeer: 'game.charades.reindeer',
 }
 
 function animalAsset(id: string): AssetId {

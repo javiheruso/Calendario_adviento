@@ -1,23 +1,33 @@
 /**
  * Day 6 spot-the-difference rules.
  *
- * Both workshop illustrations share the same five intended changes. A change is
- * identified by a normalized rectangle (0..1 on each axis) so the same data
- * works for either image and for any viewport. Marking is shared between both
- * pictures: finding a change in one picture marks it in the other too.
+ * Both final workshop illustrations (`taller_A` and `taller_B`) share the same
+ * seven approved changes. A change is identified by a normalized rectangle
+ * (0..1 on each axis) measured on the real artwork, so the same data works for
+ * either image and for any viewport. Marking is shared between both pictures:
+ * finding a change in one picture marks it in the other too.
  *
  * A tap outside every change is only feedback, never a penalty. Taps are
  * unlimited and there is no timer.
  */
 
-export type SpotDifferenceId = 'bauble' | 'gift' | 'clock' | 'hat' | 'carrot'
+export type SpotDifferenceId =
+  | 'bear-hat'
+  | 'elf-pompom'
+  | 'scarf'
+  | 'train-symbol'
+  | 'rudolph-bow'
+  | 'mug'
+  | 'paint-pot'
 
 export type SpotZone =
   | 'top-left'
-  | 'top-right'
+  | 'upper-left'
+  | 'middle-left'
+  | 'center'
   | 'middle-right'
-  | 'bottom-left'
   | 'bottom-right'
+  | 'bottom-center'
 
 export interface NormalizedRect {
   readonly x: number
@@ -32,13 +42,26 @@ export interface DifferenceSpot {
   readonly rect: NormalizedRect
 }
 
-/** The five approved changes from the specification. */
+/**
+ * The seven approved changes, in reading order. Coordinates were measured on
+ * `public/assets/final/06_diferencias/taller_A.webp` (768×1024) and checked
+ * against `taller_B`.
+ */
 export const SPOT_DIFFERENCES: readonly DifferenceSpot[] = [
-  { id: 'bauble', zone: 'top-left', rect: { x: 0.1, y: 0.19, width: 0.16, height: 0.22 } },
-  { id: 'gift', zone: 'top-right', rect: { x: 0.71, y: 0.1, width: 0.16, height: 0.22 } },
-  { id: 'clock', zone: 'middle-right', rect: { x: 0.66, y: 0.38, width: 0.18, height: 0.22 } },
-  { id: 'hat', zone: 'bottom-left', rect: { x: 0.15, y: 0.53, width: 0.16, height: 0.2 } },
-  { id: 'carrot', zone: 'bottom-right', rect: { x: 0.71, y: 0.63, width: 0.16, height: 0.22 } },
+  // Teddy bear: bow in A, Santa hat in B.
+  { id: 'bear-hat', zone: 'top-left', rect: { x: 0.02, y: 0.13, width: 0.14, height: 0.11 } },
+  // Trasto's hat tip: golden bell in A, white pompom in B.
+  { id: 'elf-pompom', zone: 'upper-left', rect: { x: 0.01, y: 0.38, width: 0.1, height: 0.08 } },
+  // Trasto's scarf: red in A, green in B.
+  { id: 'scarf', zone: 'middle-left', rect: { x: 0.08, y: 0.46, width: 0.23, height: 0.14 } },
+  // Train side: star in A, snowflake in B.
+  { id: 'train-symbol', zone: 'center', rect: { x: 0.62, y: 0.575, width: 0.13, height: 0.11 } },
+  // Rodolfo's collar: bells in A, red bow in B.
+  { id: 'rudolph-bow', zone: 'middle-right', rect: { x: 0.75, y: 0.51, width: 0.19, height: 0.11 } },
+  // Mug: red with dots in A, white with holly in B.
+  { id: 'mug', zone: 'bottom-right', rect: { x: 0.77, y: 0.67, width: 0.2, height: 0.13 } },
+  // Middle paint pot: green in A, blue in B.
+  { id: 'paint-pot', zone: 'bottom-center', rect: { x: 0.32, y: 0.805, width: 0.15, height: 0.14 } },
 ]
 
 export const SPOT_DIFFERENCE_COUNT = SPOT_DIFFERENCES.length
@@ -76,8 +99,8 @@ function clampUnit(value: number): number {
  * exposing the exact spot, and stays inside the image.
  */
 export function spotHintRect(spot: DifferenceSpot): NormalizedRect {
-  const paddingX = 0.14
-  const paddingY = 0.12
+  const paddingX = 0.1
+  const paddingY = 0.09
   const x = clampUnit(spot.rect.x - paddingX)
   const y = clampUnit(spot.rect.y - paddingY)
   const right = clampUnit(spot.rect.x + spot.rect.width + paddingX)

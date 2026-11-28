@@ -25,9 +25,9 @@ const PHRASE_WORDS = FINAL_MAGIC_WORDS.map((word) => ({
 }))
 
 /**
- * Day 24 magic crystal: decipher LUZ and MAGIA with the fixed day 22 alphabet,
- * then pronounce the phrase aloud. Pronunciation is confirmed manually; no
- * microphone or automatic recognition is involved.
+ * Day 24 magic crystal: decipher LUZ, Y and MAGIA with the fixed day 22
+ * alphabet, then pronounce the phrase aloud. Pronunciation is confirmed
+ * manually; no microphone or automatic recognition is involved.
  */
 export function MagicCrystal({ onSolved }: CrystalProps) {
   const [state, setState] = useState(createFinalMagicState)
@@ -75,7 +75,7 @@ export function MagicCrystal({ onSolved }: CrystalProps) {
     setState((current) => advanceMagicWord(current))
     setFeedback(
       state.cipher.roundIndex + 1 >= FINAL_MAGIC_WORDS.length
-        ? '¡Las dos palabras están listas! Ahora pronuncia el conjuro en voz alta.'
+        ? '¡Las tres palabras están listas! Ahora pronuncia el conjuro en voz alta.'
         : null,
     )
   }
@@ -89,7 +89,7 @@ export function MagicCrystal({ onSolved }: CrystalProps) {
     <section className="finale-crystal-game" aria-labelledby="final-magic-title">
       <h3 id="final-magic-title">Cristal de la magia</h3>
       <p className="game__lead">
-        Usa el alfabeto secreto del día 22 para descifrar LUZ y MAGIA. Después
+        Usa el alfabeto secreto del día 22 para descifrar LUZ, Y y MAGIA. Después
         pronuncia el conjuro en voz alta. No hay micrófono ni reconocimiento
         automático: tú misma confirmas que lo has dicho.
       </p>
@@ -185,7 +185,7 @@ export function MagicCrystal({ onSolved }: CrystalProps) {
           <div
             className="cipher-word"
             role="group"
-            aria-label="Símbolos del conjuro LUZ MAGIA"
+            aria-label="Símbolos del conjuro LUZ Y MAGIA"
           >
             {PHRASE_WORDS.map(({ word, symbols }) => (
               <span className="finale-pronunciation__word" key={word}>

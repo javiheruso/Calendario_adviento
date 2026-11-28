@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getAsset } from '../../domain/assets'
+import { getAsset, type AssetId } from '../../domain/assets'
 import {
   beginSimonInput,
   createSimonGame,
@@ -13,12 +13,17 @@ import {
 import { AssetGlyph } from '../AssetGlyph'
 import type { MissionGameProps } from './types'
 
-const BELLS = [
-  { note: 0, label: 'Do', tone: 'red' },
-  { note: 1, label: 'Re', tone: 'blue' },
-  { note: 2, label: 'Mi', tone: 'green' },
-  { note: 3, label: 'Fa', tone: 'gold' },
-] as const
+const BELLS: readonly {
+  note: number
+  label: string
+  tone: string
+  asset: AssetId
+}[] = [
+  { note: 0, label: 'Do', tone: 'red', asset: 'game.simon.bell.red' },
+  { note: 1, label: 'Re', tone: 'blue', asset: 'game.simon.bell.blue' },
+  { note: 2, label: 'Mi', tone: 'green', asset: 'game.simon.bell.green' },
+  { note: 3, label: 'Fa', tone: 'gold', asset: 'game.simon.bell.gold' },
+]
 
 const NOTE_ON_MS = 380
 const NOTE_GAP_MS = 220
@@ -93,24 +98,32 @@ export function BellSimonGame({ onComplete }: MissionGameProps) {
         Ronda {progress.round + 1} de {game.rounds.length} · {sequence.length} notas
       </p>
 
-      <div className="simon-bells" aria-label="Campanas mágicas">
-        {BELLS.map((bell) => (
-          <button
-            key={bell.note}
-            type="button"
-            className={`simon-bell simon-bell--${bell.tone}${
-              activeBell === bell.note ? ' simon-bell--active' : ''
-            }`}
-            onClick={() => pressBell(bell.note)}
-            disabled={progress.phase !== 'input' || complete}
-            aria-label={`Campana ${bell.label}`}
-          >
-            <span className="simon-bell__glyph" aria-hidden="true">
-              <AssetGlyph asset={getAsset('game.simon.bell')} label={false} />
-            </span>
-            <span className="simon-bell__label">{bell.label}</span>
-          </button>
-        ))}
+      <div className="simon-stage">
+        <AssetGlyph
+          asset={getAsset('game.simon.stand')}
+          label={false}
+          className="simon-stage__stand"
+          priority
+        />
+        <div className="simon-bells" aria-label="Campanas mágicas">
+          {BELLS.map((bell) => (
+            <button
+              key={bell.note}
+              type="button"
+              className={`simon-bell simon-bell--${bell.tone}${
+                activeBell === bell.note ? ' simon-bell--active' : ''
+              }`}
+              onClick={() => pressBell(bell.note)}
+              disabled={progress.phase !== 'input' || complete}
+              aria-label={`Campana ${bell.label}`}
+            >
+              <span className="simon-bell__glyph" aria-hidden="true">
+                <AssetGlyph asset={getAsset(bell.asset)} label={false} />
+              </span>
+              <span className="simon-bell__label">{bell.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {progress.phase === 'failed' ? (

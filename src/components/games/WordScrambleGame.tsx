@@ -13,8 +13,8 @@ import type { MissionGameProps } from './types'
 
 const WORD_CLUES: Readonly<Record<string, AssetId>> = {
   RENO: 'game.memory.reindeer',
-  NIEVE: 'game.word.snow',
-  REGALO: 'ui.gift',
+  NIEVE: 'ui.snowflake',
+  REGALO: 'game.craft.letter',
 }
 
 const FALLBACK_CLUE: AssetId = 'mission.08'
@@ -65,25 +65,33 @@ export function WordScrambleGame({ onComplete }: MissionGameProps) {
         Palabra {roundIndex + 1} de {rounds.length}
       </p>
 
-      <div className="scramble-slots" aria-label="Palabra en construcción">
-        {round.slots.map((tileId, slotIndex) => {
-          const tile = tileId
-            ? round.tiles.find((candidate) => candidate.id === tileId)
-            : null
+      <div className="scramble-board">
+        <AssetGlyph
+          asset={getAsset('game.word.board')}
+          label={false}
+          className="scramble-board__image"
+          priority
+        />
+        <div className="scramble-slots" aria-label="Palabra en construcción">
+          {round.slots.map((tileId, slotIndex) => {
+            const tile = tileId
+              ? round.tiles.find((candidate) => candidate.id === tileId)
+              : null
 
-          return (
-            <button
-              key={slotIndex}
-              type="button"
-              className="scramble-slot"
-              onClick={() => setRound((current) => removeLetter(current, slotIndex))}
-              disabled={!tile || solved}
-              aria-label={tile ? `Quitar la letra ${tile.char}` : 'Hueco vacío'}
-            >
-              {tile ? tile.char : ''}
-            </button>
-          )
-        })}
+            return (
+              <button
+                key={slotIndex}
+                type="button"
+                className="scramble-slot"
+                onClick={() => setRound((current) => removeLetter(current, slotIndex))}
+                disabled={!tile || solved}
+                aria-label={tile ? `Quitar la letra ${tile.char}` : 'Hueco vacío'}
+              >
+                {tile ? tile.char : ''}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <div className="scramble-tray" aria-label="Letras disponibles">

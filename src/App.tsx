@@ -455,9 +455,14 @@ export default function App() {
   return (
     <div className="app">
       <header className="app__header">
-        <p className="app__mascot" aria-hidden="true">
-          <AssetGlyph asset={getAsset('brand.trasto')} label={false} />
-        </p>
+        <figure className="app__logo">
+          <AssetGlyph
+            asset={getAsset('ui.logo.characters')}
+            label
+            className="app__logo-image"
+            priority
+          />
+        </figure>
         <p className="app__eyebrow">Calendario de Adviento · Diciembre 2026</p>
         <h1>Los 24 regalos desaparecidos</h1>
         <p className="app__lead">

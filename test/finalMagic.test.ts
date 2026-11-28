@@ -42,14 +42,15 @@ function solveWords(): FinalMagicState {
   return state
 }
 
-test('the magic crystal reuses the day 22 alphabet for LUZ MAGIA', () => {
-  assert.equal(FINAL_MAGIC_PHRASE, 'LUZ MAGIA')
-  assert.deepEqual([...FINAL_MAGIC_WORDS], ['LUZ', 'MAGIA'])
+test('the magic crystal reuses the day 22 alphabet for LUZ Y MAGIA', () => {
+  assert.equal(FINAL_MAGIC_PHRASE, 'LUZ Y MAGIA')
+  assert.deepEqual([...FINAL_MAGIC_WORDS], ['LUZ', 'Y', 'MAGIA'])
   assert.deepEqual(
     magicGame().rounds.map((round) => round.word),
-    ['LUZ', 'MAGIA'],
+    ['LUZ', 'Y', 'MAGIA'],
   )
   assert.deepEqual(symbolsForWord('LUZ'), ['sleigh', 'reindeer', 'sparkle'])
+  assert.deepEqual(symbolsForWord('Y'), ['mistletoe'])
   assert.deepEqual(symbolsForWord('MAGIA'), [
     'star',
     'tree',

@@ -1,23 +1,32 @@
 /**
  * Day 19 hidden-object rules.
  *
- * A workshop scene hides the six approved objects: key, sock, carrot, bell,
- * teddy and candy. Coordinates are normalized (0..1 on each axis), so the same
- * data works at every viewport size and with the visual zoom/pan controls.
+ * The final workshop scene hides the six approved objects: gift (centre),
+ * bell (left shelf), candy cane (behind the green cup), Santa hat (top), blue
+ * bauble (top right) and star (above the staircase). Coordinates are
+ * normalized (0..1 on each axis) measured on
+ * `public/assets/final/19_taller_desordenado/escena_objetos.webp` (1672×941),
+ * so the same data works at every viewport size and with the visual zoom/pan
+ * controls.
  *
  * A tap outside every object is only feedback. There is no timer, penalty or
- * attempt limit. Trasto may appear in the scene as an optional decoy but is
- * never required to finish the mission.
+ * attempt limit.
  */
 
-export type HiddenObjectId = 'key' | 'sock' | 'carrot' | 'bell' | 'teddy' | 'candy'
+export type HiddenObjectId =
+  | 'gift'
+  | 'bell'
+  | 'candyCane'
+  | 'santaHat'
+  | 'blueBauble'
+  | 'star'
 
 export type HiddenZone =
-  | 'top-left'
+  | 'top-center'
+  | 'top-staircase'
   | 'top-right'
   | 'middle-left'
   | 'middle-right'
-  | 'bottom-left'
   | 'bottom-center'
 
 export interface NormalizedRect {
@@ -35,12 +44,18 @@ export interface HiddenObject {
 
 /** The six approved objects, each in a different part of the workshop. */
 export const HIDDEN_OBJECTS: readonly HiddenObject[] = [
-  { id: 'key', zone: 'top-left', rect: { x: 0.07, y: 0.1, width: 0.11, height: 0.16 } },
-  { id: 'sock', zone: 'top-right', rect: { x: 0.77, y: 0.13, width: 0.12, height: 0.17 } },
-  { id: 'carrot', zone: 'middle-left', rect: { x: 0.14, y: 0.45, width: 0.1, height: 0.16 } },
-  { id: 'bell', zone: 'middle-right', rect: { x: 0.73, y: 0.48, width: 0.1, height: 0.15 } },
-  { id: 'teddy', zone: 'bottom-left', rect: { x: 0.17, y: 0.74, width: 0.13, height: 0.17 } },
-  { id: 'candy', zone: 'bottom-center', rect: { x: 0.47, y: 0.79, width: 0.11, height: 0.14 } },
+  // Santa hat on the top shelf.
+  { id: 'santaHat', zone: 'top-center', rect: { x: 0.36, y: 0.05, width: 0.19, height: 0.17 } },
+  // Golden star above the staircase.
+  { id: 'star', zone: 'top-staircase', rect: { x: 0.71, y: 0.02, width: 0.1, height: 0.12 } },
+  // Blue bauble in the top-right corner.
+  { id: 'blueBauble', zone: 'top-right', rect: { x: 0.915, y: 0.15, width: 0.08, height: 0.13 } },
+  // Bell with the red bow on the left shelf.
+  { id: 'bell', zone: 'middle-left', rect: { x: 0.35, y: 0.28, width: 0.09, height: 0.11 } },
+  // Candy cane behind the green cup.
+  { id: 'candyCane', zone: 'middle-right', rect: { x: 0.575, y: 0.25, width: 0.08, height: 0.13 } },
+  // Central wrapped gift.
+  { id: 'gift', zone: 'bottom-center', rect: { x: 0.47, y: 0.55, width: 0.14, height: 0.2 } },
 ]
 
 export const HIDDEN_OBJECT_COUNT = HIDDEN_OBJECTS.length
@@ -132,8 +147,8 @@ export function nextUnfoundHiddenObject(
  * the exact object outline, and always stays inside the scene.
  */
 export function hiddenObjectHintRect(object: HiddenObject): NormalizedRect {
-  const paddingX = 0.11
-  const paddingY = 0.1
+  const paddingX = 0.08
+  const paddingY = 0.07
   const x = clampUnit(object.rect.x - paddingX)
   const y = clampUnit(object.rect.y - paddingY)
   const right = clampUnit(object.rect.x + object.rect.width + paddingX)

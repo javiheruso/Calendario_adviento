@@ -17,7 +17,7 @@ Phase P0 fixed the stack, data contracts and local-first boundary. Phase P1 adde
 |-----------|--------------|
 | Mobile-first grid of 24 doors and four day states | Video capture from the album panel (day 7 keeps its own recording) |
 | Local December 2026 date and access to previous days | Real audio, music and narration |
-| Star tree with one star per day and real pending progress | Final artwork, licensed assets and the authorized carol |
+| Star tree with one star per day and real pending progress | Final local audio/music, licensed assets and the authorized carol |
 | Persisted child progress plus an isolated demo store | PIN change, PIN recovery and multi-user accounts |
 | First-time parental PIN setup, session unlock and lock | Automated DOM/component test runner |
 | Adult panel for main hint, location help, hiding spot and local camera/recording switch | PWA, offline and service worker |
@@ -191,29 +191,29 @@ type View =
 | Day | Game | Rules | Touch / mouse |
 |-----|------|-------|---------------|
 | 1 | Elf dance | Three-second countdown; approved cues at 04/08/12/16/20/24/28/32/36/40/44/48 s; statue pause at 32→36; final pose and celebration; restart or repeat; no camera, audio or recording | Tap start, restart or repeat |
-| 2 | Memory | 12 cards, 6 pairs; a mismatch flips back after a pause; no timer or attempt limit | Tap or click each card |
+| 2 | Memory | 12 cards, 6 pairs with the final card back and existing final Rodolfo/snowman/gift/star/bell/tree art; a mismatch flips back after a pause; no timer or attempt limit | Tap or click each card |
 | 3 | Red invasion | Manual checklist for two red garments and one red object; explicit family confirmation; no camera or automatic validation | Tap the three large checklist items, then confirm |
-| 4 | Reindeer maze | 5×7 snowy forest; collect 3 carrots, then reach the stable; blocked steps are ignored; no timer | Tap a neighbouring cell or the four large direction buttons |
+| 4 | Reindeer maze | 5×7 snowy forest; collect 3 carrots, then reach the stable; blocked steps are ignored; two final walk frames alternate every 175 ms only while moving and Rodolfo faces the walking direction (the source art faces left, so rightward steps are mirrored); no timer | Tap a neighbouring cell or the four large direction buttons |
 | 5 | Snowball fight | Five paper balls per round; three hits win; adult marks inside/outside; a short round is retried without penalty | Two large adult buttons, inside and outside |
-| 6 | Spot the difference | 5 approved changes; marking either illustration marks both; zone hint; single-image view for small screens; no penalty | Tap or click a change on either picture |
+| 6 | Spot the difference | 7 approved changes measured on the final `taller_A`/`taller_B` images; marking either illustration marks both; zone hint; single-image view for small screens; no penalty | Tap or click a change on either picture |
 | 7 | Silly carol | 3-second countdown plus a provisional 72-second lyric; six 12-second style blocks in approved order (robot, mouse, giant, sleepy, laugh, pop star); finishing completes without penalty; optional front/rear-camera recording with preview, explicit album save after success and individual download; the parental switch can hide the recording section without a permission request | Tap start, repeat, the opt-in recording controls and the album-save button when a clip exists; live preview is muted |
-| 8 | Word scramble | RENO, NIEVE, REGALO; letters go to the next empty slot and can be taken back | Tap or click letters and slots |
+| 8 | Word scramble | RENO, NIEVE, REGALO on the final wooden board; letters are rendered by code, go to the next empty slot and can be taken back | Tap or click letters and slots |
 | 9 | Sock pairs | Five pairs among ten socks; a mismatch clears after a pause; a playful 60-second timer can be extended or restarted and never gates success | Tap or click two socks |
-| 10 | Ornament patterns | The five approved sequences ABABA, ABCAB, AABAA, ABBAB, ABCABCA; choose the next token; retries unlimited | Tap or click a token |
+| 10 | Ornament patterns | The five approved sequences ABABA, ABCAB, AABAA, ABBAB, ABCABCA on the final conveyor belt; star, bell and tree differ by shape and colour; choose the next token; retries unlimited | Tap or click a token |
 | 11 | Guided drawing | Closed-eyes reindeer on the approved 0/5/15/25/35/45/55/65-second script; repeat or extend any step; manual finish always available | Start, pause, repeat, extend, reset and finish buttons |
-| 12 | Gift rain | Move the basket horizontally; catch 15 gifts; fall speed and spawn rate grow smoothly; no lives, penalty or time limit | Drag or point inside the field, or use two arrow buttons |
+| 12 | Gift rain | Move the final basket horizontally; catch 15 red/blue/green/gold gifts; fall speed and spawn rate grow smoothly; no lives, penalty or time limit | Drag or point inside the field, or use two arrow buttons |
 | 13 | No laughing | Two 30-second rounds; no tickling; the timer or a manual button ends each round; both rounds complete with no mandatory winner | Start the round, end it early or use the timer |
-| 14 | Maths chest | Discover star = 2 from tree = 5, gift = 3 and reindeer = 4; solve 6, 9 and 5; enter code 695; progressive help; no penalty | Tap or click number keys and lock digits |
+| 14 | Maths chest | Discover star = 2 from tree = 5, gift = 3 and reindeer = 4; solve 6, 9 and 5; enter code 695; final chest closed/open and lock artwork; progressive help; no penalty | Tap or click number keys and lock digits |
 | 15 | Elf hands | Build the 3–2–1 pyramid with six cups while wearing socks or mittens; mark the three rows, confirm manually; playful 60-second timer can be extended or restarted | Tap or click row, timer, restart and confirmation buttons |
-| 16 | Jigsaw | 3×3 portrait; any two pieces swap; model view is read-only | Tap two pieces or drag one onto another |
-| 17 | Silent elf | Three distinct animals drawn from a bank of twelve; each card hidden by default; show/hide without revealing audio; manual hit per animal; no camera | Tap or click show, hide and confirmed-hit buttons |
-| 18 | Bell Simon | 4 bells; 5 cumulative rounds of 2 to 6 notes; replay and retry after a miss | Tap or click the four bells |
-| 19 | Hidden objects | Find key, sock, carrot, bell, teddy and candy; normalized scene; zoom and pan controls; zone hint; the six objects are invisible hit areas at normalized coordinates until found, so no emoji or visible button reveals them; Trasto is an optional decoy | Tap or click the scene coordinates, zoom, and pan with the arrow pad |
-| 20 | Mystery bag | Three safe objects in an opaque bag; identify by touch without looking; three manual hits that can be undone; no camera | Tap or click the three manual hit markers |
-| 21 | Snowman | Copito's random hat, scarf, nose and buttons; three variants per category; observe 15 s; rebuild and consult the model; unlimited retries | Tap or click one of three variants per category |
-| 22 | Symbol cipher | Fixed 13-symbol alphabet exactly as approved; built-in A–Z keyboard; decipher RENO, MAGIA and REGALO; no penalty | Tap or click on-screen letters |
-| 23 | Surprise for Trasto | Choose a drawing, letter or craft; change the choice until an explicit manual confirmation; farewell message; no photos, video or camera | Tap or click one of three large options and the confirmation button |
-| 24 | Final mission | Intelligence: reindeer = 4, code 64. Memory: three independent 3/4/5-note bell sequences, replay and retry. Magic: LUZ MAGIA with the day 22 alphabet and manual pronunciation. All three light a provisional sleigh scene; no timer | Tap or click number keys, bells, cipher letters and manual confirmation buttons |
+| 16 | Jigsaw | 3×3 final portrait cut by code with the original 3:2 ratio (no stretching); any two pieces swap; model view is read-only | Tap two pieces or drag one onto another |
+| 17 | Silent elf | Three distinct animals drawn from the exact twelve-animal bank (elephant, cat, dog, lion, monkey, penguin, rabbit, hen, gorilla, duck, frog, reindeer) with final images; each card hidden by default; show/hide without revealing audio; manual hit per animal; no camera | Tap or click show, hide and confirmed-hit buttons |
+| 18 | Bell Simon | 4 final bells (red, blue, green, gold) on the final stand; 5 cumulative rounds of 2 to 6 notes; replay and retry after a miss | Tap or click the four bells |
+| 19 | Hidden objects | Find the gift (centre), bell (left shelf), candy cane (behind the green cup), Santa hat (top), blue bauble (top right) and star (above the staircase) in the final scene; normalized hotspots; zoom and pan controls; zone hint; the six objects are invisible hit areas until found | Tap or click the scene coordinates, zoom, and pan with the arrow pad |
+| 20 | Mystery bag | Three safe objects in the final opaque sack, which opens on completion; identify by touch without looking; three manual hits that can be undone; no camera | Tap or click the three manual hit markers |
+| 21 | Snowman | Copito's fixed model: top hat, carrot nose, red scarf and coal buttons; complete phases `00_base`…`04_botones`; three complete options per phase, no overlays; observe 15 s; rebuild and consult the model; unlimited retries | Tap or click one of three complete options per phase |
+| 22 | Symbol cipher | Shared 14-symbol alphabet including Y = mistletoe; built-in A–Z keyboard; decipher RENO, MAGIA and REGALO; no penalty | Tap or click on-screen letters |
+| 23 | Surprise for Trasto | Choose the final drawing, letter or craft; excited Trasto reacts to the choice; change it until an explicit manual confirmation; farewell art; no photos, video or camera | Tap or click one of three large options and the confirmation button |
+| 24 | Final mission | Intelligence: reindeer = 4, code 64. Memory: three independent 3/4/5-note bell sequences, replay and retry. Magic: LUZ Y MAGIA with the day 22 alphabet and manual pronunciation. Crystals cross-fade between stable off/on images; the sleigh cross-fades from prepared to flying; no timer | Tap or click number keys, bells, cipher letters and manual confirmation buttons |
 
 - Pure rules live in `src/domain/games/` and are independently testable: `dance.ts`, `memory.ts`, `redOutfit.ts`, `reindeerMaze.ts`, `snowballToss.ts`, `spotDifference.ts`, `karaoke.ts`, `karaokeRecording.ts`, `wordScramble.ts`, `sockPairs.ts`, `patterns.ts`, `guidedDrawing.ts`, `catchGifts.ts`, `noLaugh.ts`, `jigsaw.ts`, `bellSimon.ts`, `mathLock.ts`, `hiddenObjects.ts`, `snowman.ts`, `symbolCipher.ts`, `cupPyramid.ts`, `charades.ts`, `touchBag.ts`, `craftSurprise.ts`, `finalIntelligence.ts`, `finalMemory.ts`, `finalMagic.ts`, `finalMission.ts`, the shared `timer.ts` and `shuffle.ts`.
 - Game state is local React state. Only mission completion is persisted, through the existing progress record.
@@ -228,17 +228,17 @@ type View =
 - Day 12 uses a frame-capped simulation. Each catch raises the fall speed by a bounded step while the spawn interval shrinks, so the ramp is smooth and never becomes an instant loss. Missed gifts are counted but have no effect on completion.
 - Day 13 stores a two-step round state machine. Finishing the first round only opens a break, never the mission success; the second finish completes both rounds regardless of who laughed.
 - Day 18 is silent by design in this phase: bells use colours and tone labels, replaying shows the sequence again, and no background music plays during a sequence. Real tones belong to the pending audio phase.
-- Day 16 uses `game.jigsaw.portrait` from the central asset catalog. It is a provisional SVG split by CSS `background-position`; swapping pieces changes which fragment each slot shows.
+- Day 16 uses `game.jigsaw.portrait` (the final 1536×1024 WebP) from the central asset catalog. CSS `background-position` cuts the nine pieces, and the board keeps the original 3:2 ratio so no fragment is stretched.
 - Day 14 stores the approved values and operation terms once. The hidden value is not recorded until it is correct, and the chest opens only when the hidden value, all three operations and code 695 are complete. The first aid substitutes drawings with numbers; the second states that the star is what fills the gap from 3 to 5.
-- Day 19 uses six normalized object rectangles and a padded zone-hint rectangle. The scene is transformed by CSS for zoom and pan; the object rules stay independent of that visual state. Wrong taps are feedback only, and Trasto is decorative and never counted.
-- Day 21 caps each random pick to one of three variants per category, exposes a `SNOWMAN_OBSERVE_MS` constant of 15 seconds and switches from `observing` to `building` only after the observation. A full wrong combination stays editable; the model is a read-only view of the target.
-- Day 22 keeps all thirteen symbol-letter pairs in declaration order and derives each round from the same table. The keyboard appends only up to the current word length, and a correct word needs an explicit advance before the next one.
+- Day 19 uses the final scene image, six measured normalized object rectangles (gift centre, bell left shelf, candy cane behind the green cup, Santa hat top, blue bauble top right, star above the staircase) and a padded zone-hint rectangle. The scene is transformed by CSS for zoom and pan; the object rules stay independent of that visual state. Wrong taps are feedback only.
+- Day 21 uses the fixed model and consecutive phases `00_base`…`04_botones`. It exposes a `SNOWMAN_OBSERVE_MS` constant of 15 seconds and switches from `observing` to `building` only after the observation. Each phase offers three complete options; a wrong choice is feedback only and advances only on the correct option. The component renders complete phase images, never an overlay or arbitrary combination.
+- Day 22 keeps all fourteen symbol-letter pairs (including Y = mistletoe) in declaration order and derives each round from the same table. The keyboard appends only up to the current word length, and a correct word needs an explicit advance before the next one.
 - Day 15 derives the row order from `CUP_PYRAMID_ROWS = [3, 2, 1]`. Rows are marked in order, the finished stack becomes `ready`, and only the explicit `confirmCupPyramid` completes it. The timer reuse keeps zero harmless and supports extension or restart.
 - Day 17 draws three distinct animals with the shared shuffle, keeps every card hidden by default, and hides the next card after a manual hit. There is no audio path at all, so no voice can reveal the answer, and no camera is requested.
 - Day 20 stores one manual mark per identification slot. The list of safe ideas is adult guidance only; the rules never claim to know what is actually inside the bag, and marks can be toggled before completion.
 - Day 23 keeps the three handmade options in one domain list. A selection can be changed until `confirmCraftSurprise` locks it, and completion shows the farewell without any media API.
 - Day 1 keeps the approved cue times in one immutable list. The 32→36 gap is modelled as the statue cue staying active for four seconds; the final pose opens a four-second celebration and then completion. The timeline is advanced by a local interval and cleaned up on unmount. No media API is imported.
-- Day 24 reuses `bellSimon.ts` for the memory crystal with three independent 3/4/5-note sequences and reuses `symbolCipher.ts` for LUZ and MAGIA. The intelligence module keeps reindeer = 4 and code 64. Magic completion requires deciphered words plus an explicit manual pronunciation confirmation; there is no microphone or speech recognition. The final scene is provisional and only hands the child to the existing configured last hint.
+- Day 24 reuses `bellSimon.ts` for the memory crystal with three independent 3/4/5-note sequences and reuses `symbolCipher.ts` for LUZ, Y and MAGIA. The intelligence module keeps reindeer = 4 and code 64. Magic completion requires deciphered words plus an explicit manual pronunciation confirmation; there is no microphone or speech recognition. The crystals use stable off/on images, and the final scene cross-fades the prepared and flying sleigh before handing the child to the existing configured last hint.
 
 ## Day 7 karaoke and optional recording
 
@@ -307,13 +307,15 @@ Hiding spots are rendered only by the adult panel. Future-day hints are never re
 
 ## Assets
 
-`src/domain/assets.ts` remains the single source of truth for artwork keys and paths.
+`src/domain/assets.ts` remains the single source of truth for artwork keys and paths. The definitive WebP files live under `public/assets/final/` with their original subfolders; `recursos/` and the source ZIP stay git-ignored.
 
-- The current UI uses emoji placeholders marked `provisional: true`, plus one provisional SVG for the day 16 portrait.
-- Game-specific entries (`game.memory.*`, `game.maze.*`, `game.spot.*`, `game.word.snow`, `game.pattern.*`, `game.catch.basket`, `game.simon.bell`, `game.jigsaw.portrait`, `game.math.*`, `game.hidden.*`, `game.snowman.*`, `game.cipher.*`, `game.pyramid.*`, `game.charades.*`, `game.touch.*`, `game.craft.*`, `game.dance.*`, `game.karaoke.*`, `game.final.*`) live in the same catalog; components never define their own glyph or media paths. The day 6 and day 19 scenes are composed from those catalog entries and do not ship separate illustrative files.
-- Final art swaps an entry to `kind: 'image'` and sets `src` to a `public/`-relative path.
-- `resolveAssetPath` applies Vite's base URL, so components never build asset URLs themselves.
-- No component hard-codes a media path or bypasses the central catalog.
+- Shared UI, doors, frames, logos, characters, backgrounds, mission illustrations and game entries all use `kind: 'image'` with a `public/`-relative path.
+- Images are lazy by default through `AssetGlyph` (`loading="lazy"`, `decoding="async"`). Only the current mission scene or phase passes `priority` and requests eager loading; the full artwork folder is never fetched at first paint.
+- The day 6 and day 19 scenes are the final `taller_A`/`taller_B` and `escena_objetos` images; their hotspots are measured normalized rectangles. The day 16 jigsaw cuts the final portrait with CSS `background-position` and keeps the original 3:2 ratio.
+- Day 2 reuses existing final Rodolfo, snowman, gift, star, bell and tree art because the final folder has no dedicated memory-pair set.
+- Two entries stay emoji with `provisional: true` because no final asset exists: `game.final.santa` (Papá Noel for the intelligence crystal) and `game.maze.tree` (snowy pine). They are documented in the catalog labels and in the README.
+- `resolveAssetPath` applies Vite's base URL, so components never build asset URLs themselves. No component hard-codes a media path or bypasses the central catalog.
+- `test/assets.test.ts` checks that every `kind: 'image'` entry resolves to an existing, non-empty file under `public/`, and `npm run verify:pages` checks every declared catalog image against the built `dist/` output and serves it under the Pages base. The measured dimensions, alpha channels, hotspot crops, unused files and QA limits are recorded in `docs/ASSETS.md`.
 
 ## Audio system
 
@@ -340,7 +342,7 @@ The local clock is captured in React state and refreshed every minute. This open
 |-------|----------|-----|
 | View focus | Each open view receives focus on its `h1`/`h2` (`tabindex=-1`). Closing a mission, preview, album or parental surface restores focus to the door, day summary or album trigger that opened it. | Keyboard and screen-reader users keep their place instead of landing at the top of a remounted page. |
 | Live counters | Visible dance, karaoke and timers may update every second, but only milestone announcements (for example 30 s, 10 s and zero) enter a polite live region. The visible seconds text is no longer a `role="status"`. | Prevents a screen reader from announcing every tick while keeping meaningful progress cues. |
-| Cipher semantics | The thirteen symbols have stable Spanish accessible names. The reference table announces the full "symbol -> letter" row, while the secret word announces only the symbol names. | Days 22 and 24 become usable without sight without leaking the answer letter in the puzzle word. |
+| Cipher semantics | The fourteen symbols have stable Spanish accessible names. The reference table announces the full "symbol -> letter" row, while the secret word announces only the symbol names. | Days 22 and 24 become usable without sight without leaking the answer letter in the puzzle word. |
 | Touch targets | Compact critical controls use a `44px` minimum: cipher keys, album card actions, camera-facing buttons, link-style navigation and check rows. | Meets the approved minimum target without changing the visual design or adding a dependency. |
 | Recovery | A class error boundary wraps the app. It renders a clear recovery screen with "Volver al calendario" and "Recargar la página", remounts the app at the calendar view and never shows stack traces or internal details. | A broken mission cannot leave a blank screen or require a full data reset. |
 | Tests | `test/a11y.test.ts` covers milestone announcements and the touch-target constant; the symbol-cipher suite covers the accessible names and reference descriptions. | Pure rules stay verifiable without a browser test runner. |
@@ -374,25 +376,25 @@ Coverage includes:
 - Guided drawing: approved absolute times, paused timelines, per-step extension, repeat, reset, full script completion and timer-independent manual finish.
 - No laughing: two 30-second rounds, start/end gating, a break between rounds and completion without a winner condition.
 - Timers: safe countdown creation, start/pause/zero clamping, extra time and clock formatting.
-- Reindeer maze: reachable catalog, blocked and border steps, carrot collection without duplicates, stable-before-carrots rejection and full completion.
-- Spot the difference: five unique normalized rectangles, shared found state across both pictures, unlimited misses, zone-hint bounds and full completion.
+- Reindeer maze: reachable catalog, blocked and border steps, carrot collection without duplicates, stable-before-carrots rejection, full completion and the 150–200 ms walk-frame constant.
+- Spot the difference: seven unique normalized rectangles, shared found state across both pictures, unlimited misses, zone-hint bounds and full completion.
 - Word scramble: letter preservation, placement/removal, duplicate letters, wrong orders and per-word solving.
 - Patterns: the five approved sequences and answers, option derivation, wrong-choice retries, acknowledgement and full completion.
 - Gift rain: basket clamping, aligned catches, harmless misses, bounded speed and spawn growth, deterministic spawning and completion at 15.
 - Jigsaw: valid permutations, unsolved starts, reversible swaps, invalid swaps and solved detection.
 - Bell Simon: cumulative round lengths, input gating, ordinary progress, unlimited retries, wrong-note recovery and five-round completion.
 - Maths chest: approved values, operations and code, hidden-value discovery, blocked operations, unlimited wrong answers, progressive aid cap, keypad length, and the combined success condition.
-- Hidden objects: six unique normalized rectangles, shared found state, unlimited misses, zone-hint bounds and full completion.
-- Snowman: 15-second observation, three variants per category, deterministic target selection, building-phase gating, editable wrong combinations and full-combination completion.
-- Symbol cipher: exactly thirteen unique symbol-letter pairs in specification order, accessible names and reference descriptions, RENO/MAGIA/REGALO sequences, keyboard length limit, wrong and incomplete answers, explicit advance and three-word completion.
+- Hidden objects: six unique normalized rectangles for the approved gift/bell/candy-cane/Santa-hat/blue-bauble/star scene, shared found state, unlimited misses, zone-hint bounds and full completion.
+- Snowman: fixed model, 15-second observation, four consecutive phases with three complete options each, building-stage gating, kind wrong-choice retries and completion after the last phase.
+- Symbol cipher: exactly fourteen unique symbol-letter pairs in specification order (including Y = mistletoe), accessible names and reference descriptions, RENO/MAGIA/REGALO sequences, keyboard length limit, wrong and incomplete answers, explicit advance and three-word completion.
 - Elf-hands pyramid: approved 3–2–1 rows and six cups, ordered row marking, ready-before-confirmation gating, manual confirmation and penalty-free reset.
-- Silent elf: twelve-animal bank, three distinct random draws, hidden-by-default cards, show/hide toggling, per-hit advancement and three-hit completion.
+- Silent elf: the exact twelve-animal bank in approved order, three distinct random draws, hidden-by-default cards, show/hide toggling, per-hit advancement and three-hit completion.
 - Mystery bag: three manual hit slots, independent toggling, undo support and completion only with all three marks.
 - Surprise for Trasto: three handmade options, changeable selection, confirmation gated on a choice and locked after confirmation.
 - Elf dance: exact approved cue times and labels, start-gated countdown, statue cue boundaries, celebration and completion windows, clamped timeline and restart behaviour.
 - Final mission intelligence: approved values, operations and code 64, hidden reindeer discovery, blocked and incomplete codes, unlimited retries and completion.
 - Final mission memory: three independent 3/4/5-note sequences, non-cumulative construction, reuse of the Simon retry rules and full completion.
-- Final mission magic: day 22 alphabet reuse for LUZ and MAGIA, cipher input reuse, manual pronunciation gating and completion only after both words and pronunciation.
+- Final mission magic: day 22 alphabet reuse for LUZ, Y and MAGIA, cipher input reuse, manual pronunciation gating and completion only after all three words and pronunciation.
 - Final mission orchestration: the three required crystals in approved order, idempotent completion and final completion only with all three.
 - Album domain: MIME/extension resolution, unsupported files, name sanitization, day/size/date/id validation, day grouping, sorting, export manifest names and byte formatting.
 - Album capture: capability resolution, aspect-ratio size clamping, timestamped file names, and the full canvas/blob pipeline including not-ready, missing canvas, draw failure, null/throwing `toBlob` and empty-blob codes with mocks.
@@ -400,6 +402,7 @@ Coverage includes:
 - ZIP writer: standard CRC-32, stored contents, UTF-8 names, an empty archive, the entry limit and the byte limit. A generated archive was also checked with the system `unzip -t` tool.
 - Persistent storage: granted, denied, unsupported, existing grant, estimate failure and invalid estimate values.
 - Accessibility helpers: the 44 px touch-target constant and milestone-only countdown announcements, including zero, custom checkpoints, fractional ticks and invalid values.
+- Asset integrity: every `kind: 'image'` catalog entry resolves to an existing, non-empty file under `public/` with a browser-safe format; mission illustrations are final images.
 
 There is still no automated DOM or component test runner. UI behaviour is verified by type-check, build and review; adding a browser test tool would be a separate, deliberate dependency decision.
 
@@ -430,9 +433,9 @@ There is still no automated DOM or component test runner. UI behaviour is verifi
 - **Game UI and media tests:** game rules are covered by pure domain tests; React interaction and the camera/microphone path are verified by type-check, build and manual review because no browser test tool is installed. Album storage is covered through mock IndexedDB factories, not a real browser.
 - **Album real-device QA:** opening the database in Safari private mode, quota pressure, very large video imports, preview memory use, ZIP time and download placement still need real-device checks.
 - **Album media QA:** no automated browser test exercises object URLs, video playback or download placement.
-- **Audio and final art:** recorded narration, licensed music, final effects and production artwork are pending, including a replacement for the provisional jigsaw SVG and the final authorized carol. The audio infrastructure, preferences, ducking, cleanup and fallback behaviour are implemented; real-device audio QA is tracked in `docs/QA_AUDIO.md`.
+- **Audio and final art:** recorded narration, licensed music, final effects and the final authorized carol are pending. The definitive WebP artwork is integrated; only Papá Noel for the intelligence crystal and the maze's snowy pine have no final asset and stay documented provisional emoji. The audio infrastructure, preferences, ducking, cleanup and fallback behaviour are implemented; real-device audio QA is tracked in `docs/QA_AUDIO.md`.
 - **PWA/offline:** deferred; the app currently needs a network load at least once per session.
 
 ## Next step
 
-Phase P13 should execute `docs/QA_CAMERA_CAPTURE.md` and `docs/QA_AUDIO.md` on the family device, then replace the provisional day 7 carol and synthesized audio with authorized recordings, licensed music and the Trasto overlay. Real-device camera/microphone/storage/audio QA and final artwork remain separate deliberate phases. The parental panel, PIN gate, demo isolation, album boundary, capture surface, audio infrastructure and storage-error reporting stay stable.
+Phase P13 should execute `docs/QA_CAMERA_CAPTURE.md` and `docs/QA_AUDIO.md` on the family device, then replace the provisional day 7 carol and synthesized audio with authorized recordings, licensed music and the Trasto overlay. Real-device camera/microphone/storage/audio QA and mobile visual QA remain separate deliberate phases. The parental panel, PIN gate, demo isolation, album boundary, capture surface, audio infrastructure and storage-error reporting stay stable.

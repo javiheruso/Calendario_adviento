@@ -53,6 +53,30 @@ function isExternalReference(reference) {
   return /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(reference)
 }
 
+/**
+ * Reads every `src` declared by the asset catalog. The catalog uses a
+ * `${FINAL}` prefix for the final artwork folder; direct public-relative paths
+ * are also accepted. This checks the source declarations against the built
+ * `dist/` output, so a missing WebP cannot pass just because the page loaded.
+ */
+function declaredImagePaths() {
+  const catalogPath = resolvePath(projectRoot, 'src/domain/assets.ts')
+  const source = readFileSync(catalogPath, 'utf8')
+  const paths = new Set()
+
+  for (const match of source.matchAll(/src:\s*`\$\{FINAL\}([^`]+)`/g)) {
+    paths.add(`assets/final/${match[1]}`)
+  }
+
+  for (const match of source.matchAll(/src:\s*'([^']+)'/g)) {
+    if (!isExternalReference(match[1])) {
+      paths.add(match[1].replace(/^\/+/, ''))
+    }
+  }
+
+  return [...paths].sort()
+}
+
 function contentTypeFor(filePath) {
   return MIME_TYPES[extname(filePath).toLowerCase()] ?? 'application/octet-stream'
 }
@@ -122,6 +146,28 @@ try {
     fail(`These references do not use the ${base} base: ${outsideBase.join(', ')}`)
   }
 
+  const declaredAssets = declaredImagePaths()
+
+  if (declaredAssets.length === 0) {
+    fail('The asset catalog did not declare any image paths.')
+  }
+
+  const missingBuiltAssets = declaredAssets.filter(
+    (assetPath) => !existsSync(resolvePath(distDir, assetPath)),
+  )
+
+  if (missingBuiltAssets.length > 0) {
+    fail(
+      `The asset catalog declares files that are missing from dist/: ${missingBuiltAssets.join(', ')}`,
+    )
+  }
+
+  const requestedPaths = [...new Set([
+    base,
+    ...references,
+    ...declaredAssets.map((assetPath) => `${base}${assetPath}`),
+  ])]
+
   server = createDistServer()
   await new Promise((resolve, reject) => {
     server.once('error', reject)
@@ -131,7 +177,7 @@ try {
   const { port } = server.address()
   const origin = `http://127.0.0.1:${port}`
 
-  for (const pathname of [base, ...references]) {
+  for (const pathname of requestedPaths) {
     const response = await fetch(`${origin}${pathname}`)
     await response.arrayBuffer()
 
@@ -140,8 +186,10 @@ try {
     }
   }
 
-  console.log(`Verified ${references.length + 1} URLs under ${origin}${base}`)
-  console.log('The Pages base path and every local asset resolve correctly.')
+  console.log(
+    `Verified ${requestedPaths.length} URLs under ${origin}${base} (${declaredAssets.length} catalog images).`,
+  )
+  console.log('The Pages base path, local assets and every declared catalog image resolve correctly.')
 } catch (error) {
   console.error(`verify:pages failed: ${error.message}`)
   process.exitCode = 1
